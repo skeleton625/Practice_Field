@@ -16,13 +16,13 @@ public class FenseGenerator : MonoBehaviour
 
     private int prePoleCount = 0;
     private Camera mainCamera = null;
-    private List<Vector3> fensePoleList = null;
+    private List<Transform> fensePoleList = null;
     
 
     private void Start()
     {
         mainCamera = Camera.main;
-        fensePoleList = new List<Vector3>();
+        fensePoleList = new List<Transform>();
     }
 
     // Update is called once per frame
@@ -36,11 +36,19 @@ public class FenseGenerator : MonoBehaviour
             {
                 if (prePoleCount.Equals(PoleCount))
                     ClearFense();
+                else if(prePoleCount.Equals(PoleCount - 1))
+                {
+                    var vec1 = (fensePoleList[PoleCount - 2].position - fensePoleList[PoleCount - 3].position).normalized;
+                    var vec2 = (hit.point - fensePoleList[PoleCount - 2].position).normalized;
+                    var angle = Vector3.Angle(vec1, vec2);
+                    if (angle < 40 || angle > 90)
+                        return;
+                }
 
                 var pole = Instantiate(FensePole, hit.point, Quaternion.identity);
                 pole.SetParent(FenseParent);
                 SetLayerRecursive(pole, 2);
-                fensePoleList.Add(pole.position);
+                fensePoleList.Add(pole);
                 if (prePoleCount > 0)
                     GenerateFense(fensePoleList[prePoleCount - 1], fensePoleList[prePoleCount]);
                 if (prePoleCount.Equals(PoleCount - 1))
@@ -51,16 +59,29 @@ public class FenseGenerator : MonoBehaviour
 
                 ++prePoleCount;
             }
+
+            if(Input.GetKeyDown(KeyCode.R))
+            {
+                if (!fensePoleList.Count.Equals(0))
+                {
+                    Destroy(fensePoleList[prePoleCount - 1].gameObject);
+                    fensePoleList.RemoveAt(prePoleCount - 1);
+                    prePoleCount--;
+                }
+                else
+                    ClearFense();
+
+            }
         }
     }
 
-    private void GenerateFense(Vector3 start, Vector3 end)
+    private void GenerateFense(Transform start, Transform end)
     {
         for(float rate = RateScale; rate < 1; rate += RateScale)
         {
-            var position = Vector3.Lerp(start, end, rate);
+            var position = Vector3.Lerp(start.position, end.position, rate);
             var fense = Instantiate(Fense, position, Quaternion.identity);
-            fense.SetParent(FenseParent);
+            fense.SetParent(end);
         }
     }
 
@@ -69,10 +90,10 @@ public class FenseGenerator : MonoBehaviour
         var xList = new List<float>();
         var zList = new List<float>();
 
-        foreach(var position in fensePoleList)
+        foreach(var trans in fensePoleList)
         {
-            xList.Add(position.x);
-            zList.Add(position.z);
+            xList.Add(trans.position.x);
+            zList.Add(trans.position.z);
         }
 
         xList.Sort();
@@ -80,25 +101,24 @@ public class FenseGenerator : MonoBehaviour
 
         xList[0] += GrassScale;
         zList[0] += GrassScale;
-        xList[3] -= GrassScale;
-        zList[3] -= GrassScale;
+        xList[PoleCount - 1] -= GrassScale;
+        zList[PoleCount - 1] -= GrassScale;
 
-        for(float x = xList[0]; x < xList[3]; x += GrassScale)
+        for(float x = xList[0]; x < xList[PoleCount - 1]; x += GrassScale)
         {
-            for(float z = zList[0]; z < zList[3]; z += GrassScale)
+            for(float z = zList[0]; z < zList[PoleCount - 1]; z += GrassScale)
             {
                 int crossX = 0, crossZ = 0;
                 float dotX, dotZ;
                 for(int i = 0; i < PoleCount; i++)
                 {
                     int j = (i + 1) % PoleCount;
-                    var p1 = fensePoleList[i];
-                    var p2 = fensePoleList[j];
+                    var p1 = fensePoleList[i].position;
+                    var p2 = fensePoleList[j].position;
 
                     if((p1.z > z) ^ (p2.z > z))
                     {
                         dotX = CalculateEquation(p1.z, p1.x, p2.z, p2.x, z);
-
                         if (x < dotX - GrassAlpha)
                             crossX++;
                         if (x < dotX + GrassAlpha)
