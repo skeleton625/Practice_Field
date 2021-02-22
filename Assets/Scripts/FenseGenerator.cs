@@ -104,38 +104,31 @@ public class FenseGenerator : MonoBehaviour
         xList[PoleCount - 1] -= GrassScale;
         zList[PoleCount - 1] -= GrassScale;
 
-        for(float x = xList[0]; x < xList[PoleCount - 1]; x += GrassScale)
+        for (float x = xList[0]; x < xList[PoleCount - 1]; x += GrassScale)
         {
-            for(float z = zList[0]; z < zList[PoleCount - 1]; z += GrassScale)
+            for (float z = zList[0]; z < zList[PoleCount - 1]; z += GrassScale)
             {
                 int crossX = 0, crossZ = 0;
-                float dotX, dotZ;
-                for(int i = 0; i < PoleCount; i++)
+                bool isInside = true;
+                for (int i = 0; i < PoleCount; i++)
                 {
                     int j = (i + 1) % PoleCount;
                     var p1 = fensePoleList[i].position;
                     var p2 = fensePoleList[j].position;
 
-                    if((p1.z > z) ^ (p2.z > z))
+                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, z, x, ref crossX))
                     {
-                        dotX = CalculateEquation(p1.z, p1.x, p2.z, p2.x, z);
-                        if (x < dotX - GrassAlpha)
-                            crossX++;
-                        if (x < dotX + GrassAlpha)
-                            crossX++;
+                        isInside = false;
+                        break;
                     }
-
-                    if((p1.x > x) ^ (p2.x > x))
+                    if (CalculateEquation(p1.x, p1.z, p2.x, p2.z, x, z, ref crossZ))
                     {
-                        dotZ = CalculateEquation(p1.x, p1.z, p2.x, p2.z, x);
-                        if (z < dotZ - GrassAlpha)
-                            crossZ++;
-                        if (z < dotZ + GrassAlpha)
-                            crossZ++;
+                        isInside = false;
+                        break;
                     }
                 }
 
-                if (crossX.Equals(2) && crossZ.Equals(2))
+                if (isInside && (crossX % 2).Equals(1) && (crossZ % 2).Equals(1))
                 {
                     var grass = Instantiate(Grass, new Vector3(x, 0, z), Quaternion.identity);
                     grass.SetParent(FenseParent);
@@ -152,9 +145,19 @@ public class FenseGenerator : MonoBehaviour
         prePoleCount = 0;
     }
 
-    private float CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float dot)
+    private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross)
     {
-        return (p1Z - p2Z) * (dot - p1X) / (p1X - p2X) + p1Z;
+        if((p1X > x) ^ (p2X > x))
+        {
+            var collid = (p1Z - p2Z) * (x - p1X) / (p1X - p2X) + p1Z;
+            var minus = collid - GrassAlpha;
+            var plus = collid + GrassAlpha;
+            if (minus <= z && z <= plus)
+                return true;
+            if(z < collid)
+                cross++;
+        }
+        return false;
     }
 
     private void SetLayerRecursive(Transform parent, int layer)
