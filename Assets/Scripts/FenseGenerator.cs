@@ -14,15 +14,15 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private Transform FenseParent = null;
     [SerializeField] private LayerMask RayMask = default;
 
-    private int prePoleCount = 0;
+    private int poleCount = 0;
+    private float preFigureAngle = 0f;
     private Camera mainCamera = null;
-    private List<Transform> fensePoleList = null;
-    
+    private List<Transform> poleTrans = null;
 
     private void Start()
     {
         mainCamera = Camera.main;
-        fensePoleList = new List<Transform>();
+        poleTrans = new List<Transform>();
     }
 
     // Update is called once per frame
@@ -34,39 +34,31 @@ public class FenseGenerator : MonoBehaviour
             FensePole.position = hit.point;
             if(Input.GetMouseButtonDown(0))
             {
-                if (prePoleCount.Equals(PoleCount))
+                if (poleCount.Equals(PoleCount))
                     ClearFense();
-                else if(prePoleCount.Equals(PoleCount - 1))
-                {
-                    var vec1 = (fensePoleList[PoleCount - 2].position - fensePoleList[PoleCount - 3].position).normalized;
-                    var vec2 = (hit.point - fensePoleList[PoleCount - 2].position).normalized;
-                    var angle = Vector3.Angle(vec1, vec2);
-                    if (angle < 40 || angle > 90)
-                        return;
-                }
 
                 var pole = Instantiate(FensePole, hit.point, Quaternion.identity);
                 pole.SetParent(FenseParent);
                 SetLayerRecursive(pole, 2);
-                fensePoleList.Add(pole);
-                if (prePoleCount > 0)
-                    GenerateFense(fensePoleList[prePoleCount - 1], fensePoleList[prePoleCount]);
-                if (prePoleCount.Equals(PoleCount - 1))
+                poleTrans.Add(pole);
+                if (poleCount > 0)
+                    GenerateFense(poleTrans[poleCount - 1], poleTrans[poleCount]);
+                if (poleCount.Equals(PoleCount - 1))
                 {
-                    GenerateFense(fensePoleList[0], fensePoleList[PoleCount - 1]);
+                    GenerateFense(poleTrans[0], poleTrans[PoleCount - 1]);
                     GenerateGrass();
                 }
 
-                ++prePoleCount;
+                ++poleCount;
             }
 
             if(Input.GetKeyDown(KeyCode.R))
             {
-                if (!fensePoleList.Count.Equals(0))
+                if (!poleTrans.Count.Equals(0))
                 {
-                    Destroy(fensePoleList[prePoleCount - 1].gameObject);
-                    fensePoleList.RemoveAt(prePoleCount - 1);
-                    prePoleCount--;
+                    Destroy(poleTrans[poleCount - 1].gameObject);
+                    poleTrans.RemoveAt(poleCount - 1);
+                    poleCount--;
                 }
                 else
                     ClearFense();
@@ -77,7 +69,8 @@ public class FenseGenerator : MonoBehaviour
 
     private void GenerateFense(Transform start, Transform end)
     {
-        for(float rate = RateScale; rate < 1; rate += RateScale)
+        var rateScale = 1f / (Vector3.Distance(end.position, start.position));
+        for(float rate = rateScale; rate < (1 - rateScale); rate += rateScale)
         {
             var position = Vector3.Lerp(start.position, end.position, rate);
             var fense = Instantiate(Fense, position, Quaternion.identity);
@@ -90,7 +83,7 @@ public class FenseGenerator : MonoBehaviour
         var xList = new List<float>();
         var zList = new List<float>();
 
-        foreach(var trans in fensePoleList)
+        foreach(var trans in poleTrans)
         {
             xList.Add(trans.position.x);
             zList.Add(trans.position.z);
@@ -113,8 +106,8 @@ public class FenseGenerator : MonoBehaviour
                 for (int i = 0; i < PoleCount; i++)
                 {
                     int j = (i + 1) % PoleCount;
-                    var p1 = fensePoleList[i].position;
-                    var p2 = fensePoleList[j].position;
+                    var p1 = poleTrans[i].position;
+                    var p2 = poleTrans[j].position;
 
                     if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, z, x, ref crossX))
                     {
@@ -141,8 +134,9 @@ public class FenseGenerator : MonoBehaviour
     {
         foreach (Transform child in FenseParent)
             Destroy(child.gameObject);
-        fensePoleList.Clear();
-        prePoleCount = 0;
+        poleTrans.Clear();
+        poleCount = 0;
+        preFigureAngle = 0;
     }
 
     private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross)
