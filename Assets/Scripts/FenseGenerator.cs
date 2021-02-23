@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class FenseGenerator : MonoBehaviour
 {
-    [SerializeField] private int PoleCount = 4;
-    [SerializeField] private float RateScale = .1f;
     [SerializeField] private float GrassAlpha = 1f;
     [SerializeField] private float GrassScale = .1f;
     [SerializeField] private Transform Grass = null;
     [SerializeField] private Transform Fense = null;
     [SerializeField] private Transform FensePole = null;
     [SerializeField] private Transform FenseParent = null;
+    [SerializeField] private Transform FensePoleVisual = null;
     [SerializeField] private LayerMask RayMask = default;
 
     private int poleCount = 0;
-    private float preFigureAngle = 0f;
+    private bool isCollid = false;
+    private bool isComplete = false;
     private Camera mainCamera = null;
     private List<Transform> poleTrans = null;
 
@@ -31,25 +31,26 @@ public class FenseGenerator : MonoBehaviour
         var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if(Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, 1000f, RayMask))
         {
-            FensePole.position = hit.point;
+            transform.position = hit.point;
             if(Input.GetMouseButtonDown(0))
             {
-                if (poleCount.Equals(PoleCount))
+                if (isComplete)
                     ClearFense();
-
-                var pole = Instantiate(FensePole, hit.point, Quaternion.identity);
-                pole.SetParent(FenseParent);
-                SetLayerRecursive(pole, 2);
-                poleTrans.Add(pole);
-                if (poleCount > 0)
-                    GenerateFense(poleTrans[poleCount - 1], poleTrans[poleCount]);
-                if (poleCount.Equals(PoleCount - 1))
+                else if (poleCount > 3 && isCollid)
                 {
-                    GenerateFense(poleTrans[0], poleTrans[PoleCount - 1]);
+                    GenerateFense(poleTrans[poleCount - 1], poleTrans[0]);
                     GenerateGrass();
+                    isComplete = true;
                 }
-
-                ++poleCount;
+                else
+                {
+                    var pole = Instantiate(FensePole, hit.point, Quaternion.identity);
+                    pole.SetParent(FenseParent);
+                    poleTrans.Add(pole);
+                    if(poleCount > 0)
+                        GenerateFense(poleTrans[poleCount - 1], poleTrans[poleCount]);
+                    ++poleCount;
+                }
             }
 
             if(Input.GetKeyDown(KeyCode.R))
@@ -94,18 +95,18 @@ public class FenseGenerator : MonoBehaviour
 
         xList[0] += GrassScale;
         zList[0] += GrassScale;
-        xList[PoleCount - 1] -= GrassScale;
-        zList[PoleCount - 1] -= GrassScale;
+        xList[poleCount - 1] -= GrassScale;
+        zList[poleCount - 1] -= GrassScale;
 
-        for (float x = xList[0]; x < xList[PoleCount - 1]; x += GrassScale)
+        for (float x = xList[0]; x < xList[poleCount - 1]; x += GrassScale)
         {
-            for (float z = zList[0]; z < zList[PoleCount - 1]; z += GrassScale)
+            for (float z = zList[0]; z < zList[poleCount - 1]; z += GrassScale)
             {
                 int crossX = 0, crossZ = 0;
                 bool isInside = true;
-                for (int i = 0; i < PoleCount; i++)
+                for (int i = 0; i < poleCount; i++)
                 {
-                    int j = (i + 1) % PoleCount;
+                    int j = (i + 1) % poleCount;
                     var p1 = poleTrans[i].position;
                     var p2 = poleTrans[j].position;
 
@@ -136,7 +137,8 @@ public class FenseGenerator : MonoBehaviour
             Destroy(child.gameObject);
         poleTrans.Clear();
         poleCount = 0;
-        preFigureAngle = 0;
+        isCollid = false;
+        isComplete = false;
     }
 
     private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross)
@@ -159,5 +161,25 @@ public class FenseGenerator : MonoBehaviour
         parent.gameObject.layer = layer;
         foreach (Transform child in parent)
             SetLayerRecursive(child, layer);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("FensePole"))
+        {
+            isCollid = true;
+            FensePoleVisual.SetParent(null);
+            FensePoleVisual.position = other.transform.position + Vector3.up;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if(other.CompareTag("FensePole"))
+        {
+            isCollid = false;
+            FensePoleVisual.SetParent(transform);
+            FensePoleVisual.localPosition = Vector3.up;
+        }
     }
 }
