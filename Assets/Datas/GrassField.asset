@@ -12,10 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24872597638d7e546b276c693698f6cd, type: 3}
   m_Name: GrassField
   m_EditorClassIdentifier: 
-  FarmingCount: 01000000010000000100000001000000
+  FarmingType: 000000000100000002000000030000000400000005000000050000000500000005000000050000000500000005000000
   FarmingScale:
   - 2
   - 2
   - 2
   - 2
-  GrassScale: 1
+  - 2
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  GrassScale: 0.5
