@@ -8,9 +8,8 @@ public class FieldEntity : MonoBehaviour
     [SerializeField] private float MonthTimer = 0f;
 
     private int farmType = 0;
-    private int farmCount = 0;
-    [SerializeField] private float humanTime = 0f;
-    [SerializeField] private float monthTime = 0f;
+    private float humanTime = 0f;
+    private float monthTime = 0f;
     private float farmScale = 0f;
     private bool isWorkStarting = false;
 
@@ -23,10 +22,11 @@ public class FieldEntity : MonoBehaviour
         farmType = 0;
         humanTime = HumanTimer;
         monthTime = MonthTimer;
-        farmCount = fieldData.FarmingCount[farmType];
         farmScale = grassTransList.Count * fieldData.FarmingScale[farmType];
+
         this.fieldData = fieldData;
         this.grassTransList = grassTransList;
+        Debug.Log(string.Format("Grass Count : {0}", grassTransList.Count));
     }
 
     public void SetWorking(TestAI workingAI, bool isWorkStarting)
@@ -50,28 +50,25 @@ public class FieldEntity : MonoBehaviour
                 monthTime -= Time.deltaTime;
             else
             {
-                farmCount--;
-                if(farmCount.Equals(0))
+                farmScale = grassTransList.Count * fieldData.FarmingScale[farmType] - workingAI.WorkScale;
+                Debug.Log(string.Format("FarmType : {0}, Left Farm Scale : {1}", farmType, farmScale));
+                switch (fieldData.FarmingType[farmType])
                 {
-                    Debug.Log(string.Format("FarmType : {0}, Left Farm Scale : {1}", farmType, farmScale));
-                    switch (farmType)
-                    {
-                        case 0:
-                            PlantGrass();
-                            break;
-                        case 1:
-                        case 2:
-                            GrowGrass();
-                            break;
-                        case 3:
-                            HarvestGrass();
-                            break;
-                    }
-
-                    farmType = (farmType + 1) % 4;
-                    farmCount = fieldData.FarmingCount[farmType];
-                    farmScale = grassTransList.Count * fieldData.FarmingScale[farmType];
+                    case FarmType.Type1:
+                        SetActiveGrass(true);
+                        GrowGrass(1);
+                        break;
+                    case FarmType.Type2:
+                        GrowGrass(2);
+                        break;
+                    case FarmType.Type3:
+                        GrowGrass(3);
+                        break;
+                    case FarmType.Type4:
+                        HarvestGrass();
+                        break;
                 }
+                farmType = (farmType + 1) % 12;
                 monthTime += MonthTimer;
             }
 
@@ -79,32 +76,36 @@ public class FieldEntity : MonoBehaviour
                 humanTime -= Time.deltaTime;
             else
             {
-                SetWorkingPosition();
+                switch(fieldData.FarmingType[farmType])
+                {
+                    case FarmType.Type0:
+                    case FarmType.Type1:
+                    case FarmType.Type2:
+                    case FarmType.Type3:
+                    case FarmType.Type4:
+                        SetWorkingPosition();
+                        break;
+                }
                 humanTime += HumanTimer;
-                farmScale -= workingAI.WorkScale;
             }
         }
     }
 
-    private void PlantGrass()
+    private void GrowGrass(int scaleCount)
     {
-        foreach (var grassTrans in grassTransList)
-        {
-            grassTrans.localScale = Vector3.one * fieldData.GrassScale;
-            grassTrans.gameObject.SetActive(true);
-        }
-    }
-
-    private void GrowGrass()
-    {
-        var scale = Vector3.one * (fieldData.GrassScale * (farmType + 1));
+        var scale = Vector3.one * (fieldData.GrassScale * scaleCount);
         foreach (var grassTrans in grassTransList)
             grassTrans.localScale = scale;
     }
 
     private void HarvestGrass()
     {
+        SetActiveGrass(false);
+    }
+    
+    private void SetActiveGrass(bool isActive)
+    {
         foreach (var grassTrans in grassTransList)
-            grassTrans.gameObject.SetActive(false);
+            grassTrans.gameObject.SetActive(isActive);
     }
 }
