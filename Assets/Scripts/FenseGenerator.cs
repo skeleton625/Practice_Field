@@ -57,7 +57,7 @@ public class FenseGenerator : MonoBehaviour
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.R))
+            if(Input.GetKeyDown(KeyCode.R) && !isComplete)
             {
                 if (!poleTrans.Count.Equals(0))
                 {
@@ -104,6 +104,7 @@ public class FenseGenerator : MonoBehaviour
 
         int odd = 0;
         var grassTrans = new List<Transform>();
+        preFieldEntity = Instantiate(GrassParent, Vector3.zero, Quaternion.identity);
         for (float x = xList[0]; x < xList[poleCount - 1]; x += GrassScale)
         {
             var tmpList = new List<Transform>();
@@ -133,7 +134,7 @@ public class FenseGenerator : MonoBehaviour
                 {
                     var grass = Instantiate(Grass, new Vector3(x, 0, z), Quaternion.identity);
                     grass.gameObject.SetActive(false);
-                    grass.SetParent(FenseParent);
+                    grass.SetParent(preFieldEntity.transform);
                     tmpList.Add(grass);
                 }
             }
@@ -144,7 +145,6 @@ public class FenseGenerator : MonoBehaviour
             ++odd;
         }
 
-        preFieldEntity = Instantiate(GrassParent, Vector3.zero, Quaternion.identity);
         preFieldEntity.Initialize(FieldDatas[0], grassTrans);
         preFieldEntity.SetWorking(TestPlayerAI, true);
     }
