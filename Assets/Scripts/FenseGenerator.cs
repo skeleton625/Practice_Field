@@ -10,13 +10,17 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private Transform Fense = null;
     [SerializeField] private Transform FensePole = null;
     [SerializeField] private Transform FenseParent = null;
+    [SerializeField] private FieldEntity GrassParent = null;
     [SerializeField] private Transform FensePoleVisual = null;
+    [SerializeField] private FieldData[] FieldDatas = null;
+    [SerializeField] private TestAI TestPlayerAI = null;
     [SerializeField] private LayerMask RayMask = default;
 
     private int poleCount = 0;
     private bool isCollid = false;
     private bool isComplete = false;
     private Camera mainCamera = null;
+    private FieldEntity preFieldEntity = null;
     private List<Transform> poleTrans = null;
 
     private void Start()
@@ -98,8 +102,11 @@ public class FenseGenerator : MonoBehaviour
         xList[poleCount - 1] -= GrassScale;
         zList[poleCount - 1] -= GrassScale;
 
+        int odd = 0;
+        var grassTrans = new List<Transform>();
         for (float x = xList[0]; x < xList[poleCount - 1]; x += GrassScale)
         {
+            var tmpList = new List<Transform>();
             for (float z = zList[0]; z < zList[poleCount - 1]; z += GrassScale)
             {
                 int crossX = 0, crossZ = 0;
@@ -125,16 +132,28 @@ public class FenseGenerator : MonoBehaviour
                 if (isInside && (crossX % 2).Equals(1) && (crossZ % 2).Equals(1))
                 {
                     var grass = Instantiate(Grass, new Vector3(x, 0, z), Quaternion.identity);
+                    grass.gameObject.SetActive(false);
                     grass.SetParent(FenseParent);
+                    tmpList.Add(grass);
                 }
             }
+
+            if ((odd % 2).Equals(1))
+                tmpList.Reverse();
+            grassTrans.AddRange(tmpList);
+            ++odd;
         }
+
+        preFieldEntity = Instantiate(GrassParent, Vector3.zero, Quaternion.identity);
+        preFieldEntity.Initialize(FieldDatas[0], grassTrans);
+        preFieldEntity.SetWorking(TestPlayerAI, true);
     }
 
     private void ClearFense()
     {
         foreach (Transform child in FenseParent)
             Destroy(child.gameObject);
+        Destroy(preFieldEntity.gameObject);
         poleTrans.Clear();
         poleCount = 0;
         isCollid = false;
