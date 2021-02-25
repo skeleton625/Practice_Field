@@ -8,6 +8,6 @@ public enum FarmType { Type0, Type1, Type2, Type3, Type4, None };
 public class FieldData : ScriptableObject
 {
     public FarmType[] FarmingType = null;
-    public float[] FarmingScale = null;
+    public int[] FarmingScale = null;
     public float GrassScale;
 }

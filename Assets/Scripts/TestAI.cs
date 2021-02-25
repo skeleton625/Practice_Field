@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 public class TestAI : MonoBehaviour
 {
-    [SerializeField] private float workScale = 0f;
+    [SerializeField] private int workScale = 0;
 
     private NavMeshAgent agent = null;
 
-    public float WorkScale{ get => workScale; }
+    public int WorkScale{ get => workScale; }
 
     private void Start()
     {
