@@ -11,8 +11,8 @@ public class FieldGenerator : MonoBehaviour
 
     [SerializeField] private Transform Rice = null;
     [SerializeField] private Transform RiceBlock = null;
-    [SerializeField] private FieldEntity RiceEntity = null;
-    [SerializeField] private FieldData fieldData = null;
+    [SerializeField] private CropsEntity RiceEntity = null;
+    [SerializeField] private CropsData fieldData = null;
     [SerializeField] private TestAI workingAI = null;
 
     private Camera mainCamera = null;

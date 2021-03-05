@@ -10,9 +10,9 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private Transform Fense = null;
     [SerializeField] private Transform FensePole = null;
     [SerializeField] private Transform FenseParent = null;
-    [SerializeField] private FieldEntity GrassParent = null;
     [SerializeField] private Transform FensePoleVisual = null;
-    [SerializeField] private FieldData[] FieldDatas = null;
+    [SerializeField] private CropsEntity GrassParent = null;
+    [SerializeField] private CropsData[] FieldDatas = null;
     [SerializeField] private TestAI TestPlayerAI = null;
     [SerializeField] private LayerMask RayMask = default;
 
@@ -20,7 +20,7 @@ public class FenseGenerator : MonoBehaviour
     private bool isCollid = false;
     private bool isComplete = false;
     private Camera mainCamera = null;
-    private FieldEntity preFieldEntity = null;
+    private CropsEntity preFieldEntity = null;
     private List<Transform> poleTrans = null;
 
     private void Start()
@@ -145,8 +145,8 @@ public class FenseGenerator : MonoBehaviour
             ++odd;
         }
 
-        preFieldEntity.Initialize(FieldDatas[0], grassTrans);
-        preFieldEntity.SetWorking(TestPlayerAI, true);
+        GrassParent.Initialize(FieldDatas[0], grassTrans);
+        GrassParent.SetWorking(TestPlayerAI, true);
     }
 
     private void ClearFense()
