@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class CropsEntity : MonoBehaviour
 {
+    #region SerializeField Variable
     [SerializeField] private float HumanTimer = 0f;
     [SerializeField] private float MonthTimer = 0f;
     [SerializeField] private float CropSpeed = 0f;
+    #endregion
 
+    #region Private Global Variable
     private bool isWorkStarting = false;
     private int harvestedCount = 0;
     private int monthCount = 0;
+    private int nextCropsIndex = 0;
     private float cropsScale = 0f;
     private float humanTime = 0f;
     private float monthTime = 0f;
@@ -19,7 +23,70 @@ public class CropsEntity : MonoBehaviour
     private TestAI workingAI = null;
     private CropsData cropsData = null;
     private List<Transform> cropsList = null;
+    #endregion
 
+    public int CropsCount { get => cropsList.Count; }
+
+    private void Update()
+    {
+        if (isWorkStarting)
+        {
+            humanTime += Time.deltaTime;
+            if (humanTime >= HumanTimer)
+            {
+                if (workingAI.IsArrived())
+                {
+                    switch (cropsData.MonthType[monthCount])
+                    {
+                        case FarmType.Type1:
+                        case FarmType.Type2:
+                        case FarmType.Type3:
+                            GoWorkPosition();
+                            break;
+                        case FarmType.Type4:
+                            if (HarvestCrops())
+                                GoWorkPosition();
+                            break;
+                    }
+                    workScale += workingAI.WorkScale;
+                    Debug.Log(string.Format("FarmType : {0}, Pre WorkScale : {1}", cropsData.MonthType[monthCount], workScale));
+                    humanTime %= HumanTimer;
+                }
+            }
+        }
+
+        // Clocking Time -> Test Code
+        monthTime += Time.deltaTime;
+        if (monthTime >= MonthTimer)
+        {
+            monthCount = (monthCount + 1) % 12;
+
+            nextCropsIndex = 0;
+            switch (cropsData.MonthType[monthCount])
+            {
+                case FarmType.Type2:
+                    SetActiveCrops(true);
+                    StartCoroutine(GrowCrops());
+                    break;
+                case FarmType.Type3:
+                case FarmType.Type4:
+                    StartCoroutine(GrowCrops());
+                    break;
+                case FarmType.Type5:
+                    SetActiveCrops(false);
+                    var scale = cropsList[0].localScale;
+                    scale.y = 0;
+                    SetCropsScale(scale);
+                    harvestedCount = 0;
+
+                    break;
+            }
+            workScale = 0;
+            monthTime %= MonthTimer;
+        }
+    }
+
+    #region Public Functions
     public void Initialize(CropsData cropsData, List<Transform> cropsList)
     {
         humanTime = 0;
@@ -32,97 +99,40 @@ public class CropsEntity : MonoBehaviour
 
     public void SetWorking(TestAI workingAI, bool isWorkStarting)
     {
-        this.isWorkStarting = isWorkStarting;
         this.workingAI = workingAI;
-        SetWorkingPosition();
+        GoWorkPosition();
+        StartCoroutine(StartWorkCoroutine());
     }
 
-    private void SetWorkingPosition()
+    public void AddCrops(List<Transform> cropsList)
     {
-        var grassTrans = cropsList[Random.Range(0, cropsList.Count)];
-        workingAI.SetDestination(grassTrans.position);
+        this.cropsList.AddRange(cropsList);
     }
+    #endregion
 
-    private void Update()
-    {
-        if(isWorkStarting)
-        {
-            humanTime += Time.deltaTime;
-            if (humanTime >= HumanTimer)
-            {
-                switch (cropsData.MonthType[monthCount])
-                {
-                    case FarmType.Type1:
-                    case FarmType.Type2:
-                    case FarmType.Type3:
-                        SetWorkingPosition();
-                        workScale += workingAI.WorkScale;
-                        break;
-                    case FarmType.Type4:
-                        if (HarvestGrass())
-                        {
-                            SetWorkingPosition();
-                            workScale += workingAI.WorkScale;
-                        }
-                        break;
-                }
-                Debug.Log(string.Format("FarmType : {0}, Pre WorkScale : {1}", monthCount, workScale));
-                humanTime %= HumanTimer;
-            }
-
-            // Clocking Time -> Test Code
-            monthTime += Time.deltaTime;
-            if(monthTime >= MonthTimer)
-            {
-                monthCount = (monthCount + 1) % 12;
-
-                switch (cropsData.MonthType[monthCount])
-                {
-                    case FarmType.Type2:
-                        SetActiveGrass(true);
-                        StartCoroutine(GrowGrass());
-                        break;
-                    case FarmType.Type3:
-                    case FarmType.Type4:
-                        StartCoroutine(GrowGrass());
-                        break;
-                    case FarmType.Type5:
-                        SetActiveGrass(false);
-                        var scale = cropsList[0].localScale;
-                        scale.y = 0;
-                        ChangeCropsScale(scale);
-                        harvestedCount = 0;
-
-                        break;
-                }
-                workScale = 0;
-                monthTime %= MonthTimer;
-            }
-        }
-    }
-
-    private void ChangeCropsScale(Vector3 scale)
+    #region Private Functions
+    private void SetCropsScale(Vector3 scale)
     {
         foreach (var cropsTrans in cropsList)
             cropsTrans.localScale = scale;
     }
 
-    private IEnumerator GrowGrass()
+    private void SetActiveCrops(bool isActive)
     {
-        var prevScale = cropsList[0].localScale;
-        var nextScale = prevScale + Vector3.up * cropsScale;
-        var rate = Time.deltaTime * CropSpeed;
-        for(float i = 0; i < 1; i += rate)
-        {
-            var scale = Vector3.Lerp(prevScale, nextScale, i);
-            ChangeCropsScale(scale);
-           yield return null;
-        }
-
-        ChangeCropsScale(nextScale);
+        foreach (var cropsTrans in cropsList)
+            cropsTrans.gameObject.SetActive(isActive);
     }
 
-    private bool HarvestGrass()
+    private void GoWorkPosition()
+    {
+        if (nextCropsIndex < cropsList.Count)
+            workingAI.SetDestination(cropsList[nextCropsIndex].position);
+        else
+            nextCropsIndex = 0;
+        nextCropsIndex++;
+    }
+
+    private bool HarvestCrops()
     {
         var preHarvestCount = harvestedCount + workingAI.WorkScale;
         for (int i = harvestedCount; i < preHarvestCount; i++)
@@ -138,10 +148,29 @@ public class CropsEntity : MonoBehaviour
         harvestedCount += workingAI.WorkScale;
         return true;
     }
+    #endregion
 
-    private void SetActiveGrass(bool isActive)
+    #region Coroutine Functions
+    private IEnumerator GrowCrops()
     {
-        foreach (var cropsTrans in cropsList)
-            cropsTrans.gameObject.SetActive(isActive);
+        var prevScale = cropsList[0].localScale;
+        var nextScale = prevScale + Vector3.up * cropsScale;
+        var rate = Time.deltaTime * CropSpeed;
+        for (float i = 0; i < 1; i += rate)
+        {
+            var scale = Vector3.Lerp(prevScale, nextScale, i);
+            SetCropsScale(scale);
+            yield return null;
+        }
+
+        SetCropsScale(nextScale);
     }
+
+    private IEnumerator StartWorkCoroutine()
+    {
+        while (!workingAI.IsArrived())
+            yield return null;
+        isWorkStarting = true;
+    }
+    #endregion
 }
