@@ -10,7 +10,7 @@ public class TestAI : MonoBehaviour
 
     public int WorkScale{ get => workScale; }
 
-    private void Start()
+    private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
     }
@@ -18,5 +18,10 @@ public class TestAI : MonoBehaviour
     public void SetDestination(Vector3 position)
     {
         agent.SetDestination(position);
+    }
+
+    public bool IsArrived()
+    {
+        return agent.remainingDistance < agent.stoppingDistance;
     }
 }
