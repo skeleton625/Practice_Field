@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class FenseGenerator : MonoBehaviour
@@ -99,11 +98,18 @@ public class FenseGenerator : MonoBehaviour
 
     private void GenerateFense(Transform start, Transform end)
     {
-        var rateScale = 1f / (Vector3.Distance(start.position, end.position));
-        for (float rate = rateScale; rate < .99f; rate += rateScale)
+        var distance = Vector3.Distance(start.position, end.position);
+        var rateScale = 1f / distance;
+        var partScale = Vector3.Distance(Vector3.Lerp(start.position, end.position, rateScale), start.position);
+        Debug.Log(partScale);
+        for (float rate = rateScale; rate < 1; rate += rateScale)
         {
             var position = Vector3.Lerp(start.position, end.position, rate);
             var fense = Instantiate(Fense, position, Quaternion.identity);
+            var scale = fense.localScale;
+            fense.localScale = scale;
+            fense.LookAt(end);
+
             fense.SetParent(preCropsEntity.transform);
         }
     }
