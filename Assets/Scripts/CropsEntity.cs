@@ -31,10 +31,9 @@ public class CropsEntity : MonoBehaviour
     {
         if (isWorkStarting)
         {
-            humanTime += Time.deltaTime;
-            if (humanTime >= HumanTimer)
+            if (workingAI.IsArrived())
             {
-                if (workingAI.IsArrived())
+                if (humanTime >= HumanTimer)
                 {
                     switch (cropsData.MonthType[monthCount])
                     {
@@ -52,7 +51,9 @@ public class CropsEntity : MonoBehaviour
                     Debug.Log(string.Format("FarmType : {0}, Pre WorkScale : {1}", cropsData.MonthType[monthCount], workScale));
                     humanTime %= HumanTimer;
                 }
-            }
+                else
+                    humanTime += Time.deltaTime;
+            }    
         }
 
         // Clocking Time -> Test Code
@@ -125,11 +126,8 @@ public class CropsEntity : MonoBehaviour
 
     private void GoWorkPosition()
     {
-        if (nextCropsIndex < cropsList.Count)
-            workingAI.SetDestination(cropsList[nextCropsIndex].position);
-        else
-            nextCropsIndex = 0;
-        nextCropsIndex++;
+        nextCropsIndex = (nextCropsIndex + 1) % cropsList.Count;
+        workingAI.SetDestination(cropsList[nextCropsIndex].position);
     }
 
     private bool HarvestCrops()
