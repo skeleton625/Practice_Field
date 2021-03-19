@@ -10,13 +10,16 @@ public class TerrainGenerator : MonoBehaviour
     private void Awake()
     {
         mainTerrain = GetComponent<Terrain>();
-        layers = new float[mainTerrain.terrainData.heightmapResolution - 1,
-                           mainTerrain.terrainData.heightmapResolution - 1,
-                           mainTerrain.terrainData.alphamapLayers];
+        int size = mainTerrain.terrainData.heightmapResolution - 1;
+        layers = new float[size, size, mainTerrain.terrainData.alphamapLayers];
+        for (int z = 0; z < size; z++)
+            for (int x = 0; x < size; x++)
+                layers[z, x, 0] = 1;
     }
 
     public void SetTerrainLayer(int x, int z, int type)
     {
+        layers[z, x, 0] = 0;
         layers[z, x, type] = 1;
     }
 

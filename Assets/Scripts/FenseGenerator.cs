@@ -154,14 +154,16 @@ public class FenseGenerator : MonoBehaviour
 
     private void GenerateFense(Transform start, Transform end)
     {
-        for (float rate = .1f; rate < .9f; rate += .1f)
+        var length = Vector3.Distance(start.position, end.position);
+        var count = length / 2f;
+
+        for (int i = 2; i < 20; i+=2)
         {
-            var position = Vector3.Lerp(start.position, end.position, rate);
+            var position = Vector3.Lerp(start.position, end.position, i * .05f);
             var fense = Instantiate(Fense, position, Quaternion.identity);
             var scale = fense.localScale;
             fense.localScale = scale;
             fense.LookAt(end);
-
             fense.SetParent(preCropsEntity.transform);
         }
     }
@@ -203,7 +205,7 @@ public class FenseGenerator : MonoBehaviour
                 position.x += centerX;
                 position.z += centerZ;
                 int cropsX = 0, cropsZ = 0;
-                int dirtX = 0, dirtZ = 0;
+                int dirtX = 0;
                 bool inCrops = true;
                 bool inDirt = true;
 
@@ -213,27 +215,16 @@ public class FenseGenerator : MonoBehaviour
                     var p1 = poleTrans[i].position;
                     var p2 = poleTrans[j].position;
 
-                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, position.z, position.x, ref cropsX))
-                    {
+                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, position.z, position.x, ref cropsX, CropsAlpha))
                         inCrops = false;
-                        break;
-                    }
-                    if (CalculateEquation(p1.x, p1.z, p2.x, p2.z, position.x, position.z, ref cropsZ))
-                    {
+                    if (CalculateEquation(p1.x, p1.z, p2.x, p2.z, position.x, position.z, ref cropsZ, CropsAlpha))
                         inCrops = false;
-                        break;
-                    }
-                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, fixedPosition.z, fixedPosition.x, ref dirtX))
-                    {
+                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, fixedPosition.z, fixedPosition.x, ref dirtX, 0))
                         inDirt = false;
-                        break;
-                    }
-                    if (CalculateEquation(p1.x, p1.z, p2.x, p2.z, fixedPosition.x, fixedPosition.z, ref dirtZ))
-                    {
-                        inDirt = false;
-                        break;
-                    }
                 }
+
+                if (inDirt && (dirtX % 2).Equals(1))
+                    Generator.SetTerrainLayer(fixedPosition.x, fixedPosition.z, 1);
 
                 if (inCrops && (cropsX % 2).Equals(1) && (cropsZ % 2).Equals(1) &&
                     (x % 2).Equals(0) && (z % 2).Equals(0))
@@ -243,14 +234,14 @@ public class FenseGenerator : MonoBehaviour
                     crops.gameObject.SetActive(false);
                     tmpList.Add(crops);
                 }
-
-                if(inDirt && (dirtX % 2).Equals(1) && (dirtZ % 2).Equals(1))
-                    Generator.SetTerrainLayer(fixedPosition.x, fixedPosition.z, 1);
             }
 
-            if ((odd % 2).Equals(1)) tmpList.Reverse();
-            cropsTrans.AddRange(tmpList);
-            ++odd;
+            if ((x % 2).Equals(0))
+            {
+                if ((odd % 2).Equals(1)) tmpList.Reverse();
+                cropsTrans.AddRange(tmpList);
+                ++odd;
+            }
         }
 
         Generator.ApplyTerrainLayers(0, 0);
@@ -307,13 +298,13 @@ public class FenseGenerator : MonoBehaviour
         preCropsEntity = null;
     }
 
-    private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross)
+    private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross, float alpha)
     {
         if((p1X > x) ^ (p2X > x))
         {
             var collid = (p1Z - p2Z) * (x - p1X) / (p1X - p2X) + p1Z;
-            var minus = collid - CropsAlpha;
-            var plus = collid + CropsAlpha;
+            var minus = collid - alpha;
+            var plus = collid + alpha;
             if (minus <= z && z <= plus)
                 return true;
             if(z < collid)

@@ -48,7 +48,7 @@ public class CropsEntity : MonoBehaviour
                             break;
                     }
                     workScale += workingAI.WorkScale;
-                    Debug.Log(string.Format("FarmType : {0}, Pre WorkScale : {1}", cropsData.MonthType[monthCount], workScale));
+                    //Debug.Log(string.Format("FarmType : {0}, Pre WorkScale : {1}", cropsData.MonthType[monthCount], workScale));
                     humanTime %= HumanTimer;
                 }
                 else
@@ -126,8 +126,8 @@ public class CropsEntity : MonoBehaviour
 
     private void GoWorkPosition()
     {
-        nextCropsIndex = (nextCropsIndex + 1) % cropsList.Count;
         workingAI.SetDestination(cropsList[nextCropsIndex].position);
+        nextCropsIndex = (nextCropsIndex + 1) % cropsList.Count;
     }
 
     private bool HarvestCrops()
