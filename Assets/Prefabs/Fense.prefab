@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7247259158651270367}
   - component: {fileID: 8587929608932793548}
-  m_Layer: 2
+  m_Layer: 8
   m_Name: Fense
   m_TagString: FensePole
   m_Icon: {fileID: 0}

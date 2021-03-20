@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 268204158972541082}
   - component: {fileID: 5561182092762415095}
   - component: {fileID: 7490149411997007032}
-  m_Layer: 2
+  m_Layer: 8
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -89,7 +89,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1902797922024719468}
   - component: {fileID: 6631697078219065405}
-  m_Layer: 2
+  m_Layer: 8
   m_Name: FensePole
   m_TagString: FensePole
   m_Icon: {fileID: 0}
@@ -122,5 +122,5 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 2, z: 1}
+  m_Size: {x: 0.3, y: 2, z: 0.3}
   m_Center: {x: 0, y: 1, z: 0}

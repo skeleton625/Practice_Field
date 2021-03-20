@@ -16,10 +16,10 @@ TagManager:
   - 
   - 
   - Fense
-  - BulidingVisual
+  - FenseField
+  - BuildingVisual
+  - Collider
   - Terrain
-  - 
-  - 
   - 
   - 
   - 
