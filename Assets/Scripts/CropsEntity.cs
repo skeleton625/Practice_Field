@@ -25,7 +25,15 @@ public class CropsEntity : MonoBehaviour
     private List<Transform> cropsList = null;
     #endregion
 
-    public int CropsCount { get => cropsList.Count; }
+    public int CropsCount { 
+        get
+        {
+            if (cropsList == null)
+                return 0;
+            else
+                return cropsList.Count;
+        }
+    }
 
     private void Update()
     {
