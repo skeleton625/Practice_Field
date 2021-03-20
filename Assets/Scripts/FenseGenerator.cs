@@ -41,6 +41,11 @@ public class FenseGenerator : MonoBehaviour
         lengthLimit = DefaultLengthLimit;
     }
 
+    private void OnDestroy()
+    {
+        VisualMaterial.SetColor("_BaseColor", EnableColor);
+    }
+
     // Update is called once per frame
     private void Update()
     {
@@ -49,7 +54,7 @@ public class FenseGenerator : MonoBehaviour
         {
             Vector3 fixedPosition = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
             transform.position = fixedPosition;
-            var flag = isConnect || FenseCollider.IsUnCollid;
+            var flag = FenseCollider.IsUnCollid;
             if (poleCount > 0)
             {
                 flag &= IsBelowLimit(poleTrans[poleCount - 1].position, fixedPosition);
@@ -61,8 +66,6 @@ public class FenseGenerator : MonoBehaviour
                     angle += CalculateAngle(poleTrans[2].position, fixedPosition, poleTrans[0].position);
                     angle += CalculateAngle(fixedPosition, poleTrans[0].position, poleTrans[1].position);
                     flag &= IsBelowLimit(fixedPosition, poleTrans[0].position) && angle > 350;
-                    if (isConnect && !connectCount.Equals(1))
-                        flag = false;
                 }
                 FenseCollider.transform.position = Vector3.Lerp(poleTrans[poleCount - 1].position, fixedPosition, .05f);
                 colliderScale.z = Vector3.Distance(FenseCollider.transform.position, fixedPosition) * 9.5f;
@@ -87,9 +90,7 @@ public class FenseGenerator : MonoBehaviour
                 {
                     case 0:
                         ++poleCount;
-                        if (isConnect)
-                            ++connectCount;
-                        else
+                        if (!isConnect)
                             preCropsEntity = Instantiate(CropsParent, position, Quaternion.identity);
                         pole.SetParent(preCropsEntity.transform);
                         FenseCollider.transform.parent = null;
@@ -155,11 +156,12 @@ public class FenseGenerator : MonoBehaviour
     private void GenerateFense(Transform start, Transform end)
     {
         var length = Vector3.Distance(start.position, end.position);
-        var count = length / 2f;
+        var count = (int)(length / 2) / 2 * 2;
 
-        for (int i = 2; i < 20; i+=2)
+        var direction = (end.position - start.position).normalized;
+        for (int i = 1; i <= count; i++)
         {
-            var position = Vector3.Lerp(start.position, end.position, i * .05f);
+            var position = start.position + direction * i * 2;
             var fense = Instantiate(Fense, position, Quaternion.identity);
             var scale = fense.localScale;
             fense.localScale = scale;
@@ -249,16 +251,17 @@ public class FenseGenerator : MonoBehaviour
         var verts = new Vector3[8];
         var tris = new int[] { 0, 1, 5, 0, 4, 5, 1, 2, 6, 1, 5, 6, 2, 3, 7, 2, 6, 7,
                                3, 0, 4, 3, 4, 7, 4, 5, 6, 4, 7, 6, 0, 1, 2, 0, 3, 2};
+        verts[0] = (poleTrans[0].position - poleTrans[0].position) + (poleTrans[2].position - poleTrans[0].position).normalized * .5f;
+        verts[1] = (poleTrans[1].position - poleTrans[0].position) + (poleTrans[3].position - poleTrans[1].position).normalized * .5f;
+        verts[2] = (poleTrans[2].position - poleTrans[0].position) + (poleTrans[0].position - poleTrans[2].position).normalized * .5f;
+        verts[3] = (poleTrans[3].position - poleTrans[0].position) + (poleTrans[1].position - poleTrans[3].position).normalized * .5f;
         for (int i = 0; i < 4; i++)
-        {
-            verts[i] = poleTrans[i].position - poleTrans[0].position;
-            verts[i + 4] = poleTrans[i].position - poleTrans[0].position + Vector3.up;
-        }
+            verts[i + 4] = verts[i] + Vector3.up;
         var mesh = new Mesh { vertices = verts, triangles = tris };
         var meshCollider = preCropsEntity.GetComponent<MeshCollider>();
 
         /* 최적화 필요 */
-        if (isConnect)
+        if (preCropsEntity.CropsCount > 0)
         {
             var position = preCropsEntity.transform.position;
             preCropsEntity.transform.position = Vector3.zero;
@@ -287,9 +290,10 @@ public class FenseGenerator : MonoBehaviour
     {
         lengthLimit = DefaultLengthLimit;
         colliderScale.z = colliderScale.x;
-        FenseCollider.transform.parent = transform;
+        FenseCollider.transform.parent = FensePoleVisual;
         FenseCollider.transform.localScale = colliderScale;
-        FenseCollider.transform.localPosition = Vector3.zero;
+        FenseCollider.transform.localPosition = new Vector3(0, -.5f, 0);
+        FenseCollider.transform.rotation = Quaternion.identity;
         poleTrans.Clear();
         poleCount = 0;
         connectCount = 0;
@@ -322,6 +326,4 @@ public class FenseGenerator : MonoBehaviour
     {
         return (prevPos - nextPos).sqrMagnitude < lengthLimit;
     }
-
-
 }
