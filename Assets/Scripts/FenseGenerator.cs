@@ -16,27 +16,28 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private LayerMask RayMask = default;
     [SerializeField] private Color EnableColor = Color.black;
     [SerializeField] private Color DisableColor = Color.black;
-    [SerializeField] private ObjectCollider FenseCollider = null;
+    [SerializeField] private ObjectCollider[] FenseCollider = null;
     [SerializeField] private TerrainGenerator Generator = null;
 
     private int poleCount = 0;
-    private int connectCount = 0;
     private float lengthLimit = 0f;
     private bool isEnable = true;
-    private bool isConnect = false;
+    private bool isCropConnect = false;
+    private bool isPoleConnect = false;
     private Vector3 colliderScale = Vector3.zero;
 
     private Camera mainCamera = null;
+    private Transform firstFensePole = null;
     private CropsEntity preCropsEntity = null;
-    private List<Transform> poleTrans = null;
+    private List<Vector3> polePosition = null;
 
     #region Unity Functions
     private void Start()
     {
         mainCamera = Camera.main;
-        poleTrans = new List<Transform>();
+        polePosition = new List<Vector3> ();
         VisualMaterial.SetColor("_BaseColor", EnableColor);
-        colliderScale = FenseCollider.transform.localScale;
+        colliderScale = FenseCollider[0].transform.localScale;
         DefaultLengthLimit = DefaultLengthLimit * DefaultLengthLimit;
         lengthLimit = DefaultLengthLimit;
     }
@@ -54,24 +55,29 @@ public class FenseGenerator : MonoBehaviour
         {
             Vector3 fixedPosition = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
             transform.position = fixedPosition;
-            var flag = FenseCollider.IsUnCollid;
-            if (poleCount > 0)
+
+            var flag = FenseCollider[0].IsUnCollid;
+            switch(poleCount)
             {
-                flag &= IsBelowLimit(poleTrans[poleCount - 1].position, fixedPosition);
-                if (poleCount.Equals(3))
-                {
-                    float angle = 0;
-                    angle += CalculateAngle(poleTrans[0].position, poleTrans[1].position, poleTrans[2].position);
-                    angle += CalculateAngle(poleTrans[1].position, poleTrans[2].position, fixedPosition);
-                    angle += CalculateAngle(poleTrans[2].position, fixedPosition, poleTrans[0].position);
-                    angle += CalculateAngle(fixedPosition, poleTrans[0].position, poleTrans[1].position);
-                    flag &= IsBelowLimit(fixedPosition, poleTrans[0].position) && angle > 350;
-                }
-                FenseCollider.transform.position = Vector3.Lerp(poleTrans[poleCount - 1].position, fixedPosition, .05f);
-                colliderScale.z = Vector3.Distance(FenseCollider.transform.position, fixedPosition) * 9.5f;
-                FenseCollider.transform.localScale = colliderScale;
-                FenseCollider.transform.LookAt(fixedPosition);
+                case 0:
+                    flag |= isPoleConnect;
+                    break;
+                case 1:
+                case 2:
+                    MoveFenseCollider(0, polePosition[poleCount - 1], fixedPosition);
+                    flag &= !isPoleConnect && IsBelowLimit(polePosition[poleCount - 1], fixedPosition);
+                    break;
+                case 3:
+                    MoveFenseCollider(0, polePosition[poleCount - 1], fixedPosition);
+                    MoveFenseCollider(1, polePosition[0], fixedPosition);
+
+                    if(isCropConnect)
+                        flag &= isPoleConnect && IsBelowLimit(fixedPosition, polePosition[0]) && IsSquareForm(fixedPosition) && FenseCollider[1].IsUnCollid;
+                    else
+                        flag &= !isPoleConnect && IsBelowLimit(fixedPosition, polePosition[0]) && IsSquareForm(fixedPosition) && FenseCollider[1].IsUnCollid;
+                    break;
             }
+ 
             if (isEnable != flag)
             {
                 isEnable = flag;
@@ -85,26 +91,34 @@ public class FenseGenerator : MonoBehaviour
             {
                 var position = new Vector3(FensePoleVisual.position.x, hit.point.y, FensePoleVisual.position.z);
                 var pole = Instantiate(FensePole, position, Quaternion.identity);
-                poleTrans.Add(pole);
+                polePosition.Add(position);
                 switch (poleCount)
                 {
                     case 0:
                         ++poleCount;
-                        if (!isConnect)
+                        if (!isPoleConnect)
                             preCropsEntity = Instantiate(CropsParent, position, Quaternion.identity);
+                        else
+                            isCropConnect = true;
+                        firstFensePole = pole;
                         pole.SetParent(preCropsEntity.transform);
-                        FenseCollider.transform.parent = null;
+                        FenseCollider[0].transform.parent = null;
                         break;
                     case 1:
+                        pole.SetParent(preCropsEntity.transform);
+                        GenerateFense(polePosition[poleCount - 1], polePosition[poleCount]);
+                        ++poleCount;
+                        break;
                     case 2:
                         pole.SetParent(preCropsEntity.transform);
-                        GenerateFense(poleTrans[poleCount - 1], poleTrans[poleCount]);
+                        GenerateFense(polePosition[poleCount - 1], polePosition[poleCount]);
+                        FenseCollider[1].transform.parent = null;
                         ++poleCount;
                         break;
                     case 3:
                         pole.SetParent(preCropsEntity.transform);
-                        GenerateFense(poleTrans[poleCount - 1], poleTrans[poleCount]);
-                        GenerateFense(poleTrans[poleCount], poleTrans[0]);
+                        GenerateFense(polePosition[poleCount - 1], polePosition[poleCount]);
+                        GenerateFense(polePosition[poleCount], polePosition[0]);
                         GenerateCropsEntity();
                         ClearFense();
                         break;
@@ -123,7 +137,7 @@ public class FenseGenerator : MonoBehaviour
     {
         if (other.CompareTag("FensePole"))
         {
-            isConnect = true;
+            isPoleConnect = true;
             FensePoleVisual.SetParent(null);
             FensePoleVisual.position = other.transform.position + Vector3.up;
 
@@ -140,7 +154,7 @@ public class FenseGenerator : MonoBehaviour
     {
         if (other.CompareTag("FensePole"))
         {
-            isConnect = false;
+            isPoleConnect = false;
             FensePoleVisual.SetParent(transform);
             FensePoleVisual.localPosition = Vector3.up;
 
@@ -153,35 +167,33 @@ public class FenseGenerator : MonoBehaviour
     }
 #endregion
 
-    private void GenerateFense(Transform start, Transform end)
+    private void GenerateFense(Vector3 start, Vector3 end)
     {
-        var length = Vector3.Distance(start.position, end.position);
-        var count = (int)(length / 2) / 2 * 2;
+        var length = Vector3.Distance(start, end);
+        var rate = 1f / length;
+        var scale = Vector3.Distance(start, Vector3.Lerp(start, end, rate));
 
-        var direction = (end.position - start.position).normalized;
-        for (int i = 1; i <= count; i++)
+        for (float i = rate; i < .95f; i += rate)
         {
-            var position = start.position + direction * i * 2;
+            var position = Vector3.Lerp(start, end,i);
             var fense = Instantiate(Fense, position, Quaternion.identity);
-            var scale = fense.localScale;
-            fense.localScale = scale;
-            fense.LookAt(end);
             fense.SetParent(preCropsEntity.transform);
+            fense.localScale *= scale;
+            fense.LookAt(end);
         }
     }
 
     private void GenerateCropsEntity()
     {
-        var centerX = 0f;
-        var centerZ = 0f;
-        var xList = new List<float>();
-        var zList = new List<float>();
-        foreach (var trans in poleTrans)
+        float centerX = 0f, centerZ = 0f;
+        List<float> xList = new List<float>();
+        List<float> zList = new List<float>();
+        foreach (var position in polePosition)
         {
-            xList.Add(trans.position.x);
-            zList.Add(trans.position.z);
-            centerX += trans.position.x;
-            centerZ += trans.position.z;
+            xList.Add(position.x);
+            zList.Add(position.z);
+            centerX += position.x;
+            centerZ += position.z;
         }
         xList.Sort();
         zList.Sort();
@@ -192,7 +204,7 @@ public class FenseGenerator : MonoBehaviour
         zList[0] -= CropsScale;
         xList[poleCount] += CropsScale;
         zList[poleCount] += CropsScale;
-        var direction = Vector3.Normalize(poleTrans[3].position - poleTrans[0].position);
+        var direction = Vector3.Normalize(polePosition[3] - polePosition[0]);
         var rotationY = Mathf.Acos(Vector3.Dot(Vector3.right, direction)) * 180 / Mathf.PI;
 
         int odd = 0;
@@ -214,15 +226,17 @@ public class FenseGenerator : MonoBehaviour
                 for (int i = 0; i < poleCount + 1; i++)
                 {
                     int j = (i + 1) % (poleCount + 1);
-                    var p1 = poleTrans[i].position;
-                    var p2 = poleTrans[j].position;
+                    Vector3 rP = Quaternion.Euler(0, 180, 0) * -position;
+                    Vector3 rfP = Quaternion.Euler(0, 180, 0) * -fixedPosition;
+                    Vector3 rP1 = Quaternion.Euler(0, 180, 0) * -polePosition[i];
+                    Vector3 rP2 = Quaternion.Euler(0, 180, 0) * -polePosition[j];
 
-                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, position.z, position.x, ref cropsX, CropsAlpha))
-                        inCrops = false;
-                    if (CalculateEquation(p1.x, p1.z, p2.x, p2.z, position.x, position.z, ref cropsZ, CropsAlpha))
-                        inCrops = false;
-                    if (CalculateEquation(p1.z, p1.x, p2.z, p2.x, fixedPosition.z, fixedPosition.x, ref dirtX, 0))
+                    if (CalculateEquation(rP1, rP2, rfP, ref dirtX, 0))
                         inDirt = false;
+                    if (CalculateEquation(rP1, rP2, rP, ref cropsX, CropsAlpha))
+                        inCrops = false;
+                    if (CalculateEquation(polePosition[i], polePosition[j], position, ref cropsZ, CropsAlpha))
+                        inCrops = false;
                 }
 
                 if (inDirt && (dirtX % 2).Equals(1))
@@ -249,14 +263,13 @@ public class FenseGenerator : MonoBehaviour
         Generator.ApplyTerrainLayers(0, 0);
 
         var verts = new Vector3[8];
-        var tris = new int[] { 0, 1, 5, 0, 4, 5, 1, 2, 6, 1, 5, 6, 2, 3, 7, 2, 6, 7,
-                               3, 0, 4, 3, 4, 7, 4, 5, 6, 4, 7, 6, 0, 1, 2, 0, 3, 2};
-        verts[0] = (poleTrans[0].position - poleTrans[0].position) + (poleTrans[2].position - poleTrans[0].position).normalized * .5f;
-        verts[1] = (poleTrans[1].position - poleTrans[0].position) + (poleTrans[3].position - poleTrans[1].position).normalized * .5f;
-        verts[2] = (poleTrans[2].position - poleTrans[0].position) + (poleTrans[0].position - poleTrans[2].position).normalized * .5f;
-        verts[3] = (poleTrans[3].position - poleTrans[0].position) + (poleTrans[1].position - poleTrans[3].position).normalized * .5f;
+        var tris = new int[] { 0, 1, 5,  0, 4, 5,  1, 2, 6,  1, 5, 6,  2, 3, 7,  2, 6, 7,
+                               3, 0, 4,  3, 4, 7,  4, 5, 6,  4, 7, 6,  0, 1, 2,  0, 3, 2};
         for (int i = 0; i < 4; i++)
+        {
+            verts[i] = Vector3.Lerp(polePosition[i], polePosition[(i + 2)%4], .05f) - polePosition[0];
             verts[i + 4] = verts[i] + Vector3.up;
+        }    
         var mesh = new Mesh { vertices = verts, triangles = tris };
         var meshCollider = preCropsEntity.GetComponent<MeshCollider>();
 
@@ -270,7 +283,7 @@ public class FenseGenerator : MonoBehaviour
             var combine = new CombineInstance[2];
             combine[0].mesh = mesh;
             combine[1].mesh = meshCollider.sharedMesh;
-            combine[0].transform = poleTrans[0].transform.localToWorldMatrix;
+            combine[0].transform = firstFensePole.localToWorldMatrix;
             combine[1].transform = meshCollider.transform.localToWorldMatrix;
             combineMesh.CombineMeshes(combine);
             meshCollider.sharedMesh = combineMesh;
@@ -289,37 +302,48 @@ public class FenseGenerator : MonoBehaviour
     private void ClearFense()
     {
         lengthLimit = DefaultLengthLimit;
-        colliderScale.z = colliderScale.x;
-        FenseCollider.transform.parent = FensePoleVisual;
-        FenseCollider.transform.localScale = colliderScale;
-        FenseCollider.transform.localPosition = new Vector3(0, -.5f, 0);
-        FenseCollider.transform.rotation = Quaternion.identity;
-        poleTrans.Clear();
+        polePosition.Clear();
         poleCount = 0;
-        connectCount = 0;
+
         isEnable = true;
-        isConnect = false;
+        isCropConnect = false;
+        isPoleConnect = false;
         preCropsEntity = null;
+
+        FenseCollider[0].ClearCollider(FensePoleVisual);
+        FenseCollider[1].ClearCollider(FensePoleVisual);
     }
 
-    private bool CalculateEquation(float p1X, float p1Z, float p2X, float p2Z, float x, float z, ref int cross, float alpha)
+    private void MoveFenseCollider(int index, Vector3 prevPosition, Vector3 nextPosition)
     {
-        if((p1X > x) ^ (p2X > x))
+        FenseCollider[index].transform.position = Vector3.Lerp(prevPosition, nextPosition, .05f);
+        colliderScale.z = Vector3.Distance(FenseCollider[index].transform.position, nextPosition) * 9.5f;
+        FenseCollider[index].transform.localScale = colliderScale;
+        FenseCollider[index].transform.LookAt(nextPosition);
+    }
+
+    private bool CalculateEquation(Vector3 p1, Vector3 p2, Vector3 p, ref int cross, float alpha)
+    {
+        if((p1.x > p.x) ^ (p2.x > p.x))
         {
-            var collid = (p1Z - p2Z) * (x - p1X) / (p1X - p2X) + p1Z;
+            var collid = (p1.z - p2.z) * (p.x - p1.x) / (p1.x - p2.x) + p1.z;
             var minus = collid - alpha;
             var plus = collid + alpha;
-            if (minus <= z && z <= plus)
+            if (minus <= p.z && p.z <= plus)
                 return true;
-            if(z < collid)
+            if(p.z < collid)
                 cross++;
         }
         return false;
     }
 
-    private float CalculateAngle(Vector3 from, Vector3 center, Vector3 to)
+    private bool IsSquareForm(Vector3 lastPosition)
     {
-        return Vector3.Angle(from - center, to - center);
+        float angle = Vector3.Angle(polePosition[0] - polePosition[1], polePosition[2] - polePosition[1]);
+        angle += Vector3.Angle(polePosition[1] - polePosition[2], lastPosition - polePosition[2]);
+        angle += Vector3.Angle(polePosition[2] - lastPosition, polePosition[0] - lastPosition);
+        angle += Vector3.Angle(lastPosition - polePosition[0], polePosition[1] - polePosition[0]);
+        return 350 < angle;
     }
 
     private bool IsBelowLimit(Vector3 prevPos, Vector3 nextPos)
