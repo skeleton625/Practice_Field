@@ -6,6 +6,8 @@ TagManager:
   tags:
   - FensePole
   - Crops
+  - Building
+  - Terrain
   layers:
   - Default
   - TransparentFX
