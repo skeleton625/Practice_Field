@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ObjectCollider : MonoBehaviour
 {
-    [SerializeField] private string CollidTag;
+    [SerializeField] private string CollidTag = "";
 
     public bool IsUnCollid { get; private set; }
 
