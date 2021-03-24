@@ -7,7 +7,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private UIManager uiManager = null;
     [SerializeField] private TerrainGenerator Generator = null;
 
-    private int hashCode = 0;
+    private int houseHashCode = 0;
+    private int cropsHashCode = 0;
     private Camera mainCamera = null;
 
     private void Start()
@@ -22,17 +23,31 @@ public class PlayerController : MonoBehaviour
             var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             if(Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, 1000f))
             {
-                if(hit.transform.CompareTag("Building"))
+                if (hit.transform.CompareTag("Building"))
                 {
-                    if (hit.transform.GetHashCode().Equals(hashCode))
+                    if (hit.transform.GetHashCode().Equals(houseHashCode))
                     {
-                        uiManager.SetActiveButtonWindows(false);
-                        hashCode = 0;
+                        uiManager.SetActiveButtonWindows(0, false);
+                        houseHashCode = 0;
                     }
                     else
                     {
-                        uiManager.SetActiveButtonWindows(true);
-                        hashCode = hit.transform.GetHashCode();
+                        uiManager.SetActiveButtonWindows(0, true);
+                        houseHashCode = hit.transform.GetHashCode();
+                    }
+                }
+
+                if (hit.transform.CompareTag("Crops"))
+                {
+                    if (hit.transform.GetHashCode().Equals(cropsHashCode))
+                    {
+                        uiManager.SetActiveButtonWindows(1, false);
+                        cropsHashCode = 0;
+                    }
+                    else
+                    {
+                        uiManager.SetActiveButtonWindows(1, true);
+                        cropsHashCode = hit.transform.GetHashCode();
                     }
                 }
             }    
