@@ -39,10 +39,16 @@ public class FenseGenerator : MonoBehaviour
     private List<Transform> poleTransform = null;
 
     #region Unity Functions
+    private void Awake()
+    {
+        poleTransform = new List<Transform>();
+    }
+
     private void OnEnable()
     {
+        if(poleTransform != null)
+            poleTransform.Clear();
         mainCamera = Camera.main;
-        poleTransform = new List<Transform>();
         VisualMaterial.SetColor("_BaseColor", EnableColor);
         colliderScale = FenseCollider[0].transform.localScale;
         lengthLimit = DefaultLengthLimit;
@@ -138,7 +144,7 @@ public class FenseGenerator : MonoBehaviour
                             FenseCollider[1].transform.parent = null;
                             break;
                         case 3:
-                            GenerateCollider();
+                            GenerateCollider(expendCrops);
                             break;
                     }
                     ++poleCount;
@@ -184,7 +190,7 @@ public class FenseGenerator : MonoBehaviour
                             FenseCollider[0].transform.parent = null;
                             break;
                         case 3:
-                            GenerateCollider();
+                            GenerateCollider(createCrops);
                             break;
                     }
                     ++poleCount;
@@ -221,16 +227,14 @@ public class FenseGenerator : MonoBehaviour
                         if (!isExpension)
                             GenerateFense(poleTransform[3].position, poleTransform[0].position);
                         else
-                            MergeCollider();
-                        break;
-                    case 1:
+                            MergeCrops();
                         for (int i = 0; i < 4; i++)
                             Destroy(poleTransform[i].GetChild(0).gameObject);
                         break;
-                    case 2:
+                    case 1:
                         Generator.ApplyTerrainLayers(startPosition.x, startPosition.y, 1, ref cropsLayer);
                         if (isExpension)
-                            expendCrops.Initialize(CropsDatas[0], cropsTransform);
+                            createCrops.AddCrops(cropsTransform);
                         else
                             createCrops.Initialize(CropsDatas[0], cropsTransform);
                         break;
@@ -349,7 +353,7 @@ public class FenseGenerator : MonoBehaviour
         }
     }
 
-    private void GenerateCollider()
+    private void GenerateCollider(CropsEntity entity)
     {
         var verts = new Vector3[8];
         var tris = new int[] { 0, 1, 5,  0, 4, 5,  1, 2, 6,  1, 5, 6,  2, 3, 7,  2, 6, 7,
@@ -363,27 +367,40 @@ public class FenseGenerator : MonoBehaviour
             verts[i + 4] = verts[i] + Vector3.up;
         }
         var mesh = new Mesh { vertices = verts, triangles = tris };
-        var meshCollider = createCrops.GetComponent<MeshCollider>();
+        var meshCollider = entity.GetComponent<MeshCollider>();
         meshCollider.sharedMesh = mesh;
     }
 
-    private void MergeCollider()
+    private void MergeCrops()
     {
         var createMesh = createCrops.GetComponent<MeshCollider>();
         var expendMesh = expendCrops.GetComponent<MeshCollider>();
         var combineMesh = new Mesh();
         var combine = new CombineInstance[2];
-        var position = createCrops.transform.position;
+
+        var defaultPos1 = createCrops.transform.position;
+        var defaultPos2 = expendCrops.transform.position;
+
         createCrops.transform.position = Vector3.zero;
+        expendCrops.transform.position = defaultPos2 - defaultPos1;
 
         combine[0].mesh = createMesh.sharedMesh;
         combine[1].mesh = expendMesh.sharedMesh;
         combine[0].transform = createCrops.transform.localToWorldMatrix;
         combine[1].transform = expendCrops.transform.localToWorldMatrix;
         combineMesh.CombineMeshes(combine);
-
         createMesh.sharedMesh = combineMesh;
-        createCrops.transform.position = position;
+
+        createCrops.transform.position = defaultPos1;
+        expendCrops.transform.position = defaultPos2;
+
+        var children = new List<Transform>();
+        foreach (Transform child in expendCrops.transform)
+            children.Add(child);
+
+        foreach (Transform child in children)
+            child.parent = createCrops.transform;
+        Destroy(expendCrops.gameObject);
     }
 
     public void ClearFense()

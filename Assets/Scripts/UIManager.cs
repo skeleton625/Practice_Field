@@ -16,11 +16,15 @@ public class UIManager : MonoBehaviour
     {
         if (isCreateField)
         {
-            isCreateField = false;
-            StopCoroutine(fieldCoroutine);
+            if (fieldCoroutine != null)
+            {
+                StopCoroutine(fieldCoroutine);
+                fieldCoroutine = null;
+            }
             fenseGenerator.DestroyFense(false);
             fenseGenerator.ClearFense();
             fenseGenerator.gameObject.SetActive(false);
+            isCreateField = false;
         }
         else
         {
@@ -39,11 +43,15 @@ public class UIManager : MonoBehaviour
     {
         if (isExpendField)
         {
-            isExpendField = false;
-            StopCoroutine(fieldCoroutine);
+            if (fieldCoroutine != null)
+            {
+                StopCoroutine(fieldCoroutine);
+                fieldCoroutine = null;
+            }
             fenseGenerator.DestroyFense(true);
             fenseGenerator.ClearFense();
             fenseGenerator.gameObject.SetActive(false);
+            isExpendField = false;
         }
         else
             fenseGenerator.gameObject.SetActive(true);
@@ -65,11 +73,15 @@ public class UIManager : MonoBehaviour
             case 0:
                 if (isExpendField)
                 {
-                    isExpendField = false;
-                    StopCoroutine(fieldCoroutine);
+                    if (fieldCoroutine != null)
+                    {
+                        StopCoroutine(fieldCoroutine);
+                        fieldCoroutine = null;
+                    }
                     fenseGenerator.ClearFense();
                     CropsWindow.SetActive(false);
                     fenseGenerator.gameObject.SetActive(false);
+                    isExpendField = false;
                 }
 
                 BuildingWindow.SetActive(isActive);
@@ -89,11 +101,15 @@ public class UIManager : MonoBehaviour
             case 1:
                 if (isCreateField)
                 {
-                    isCreateField = false;
-                    StopCoroutine(fieldCoroutine);
+                    if (fieldCoroutine != null)
+                    {
+                        StopCoroutine(fieldCoroutine);
+                        fieldCoroutine = null;
+                    }
                     fenseGenerator.ClearFense();
                     BuildingWindow.SetActive(false);
                     fenseGenerator.gameObject.SetActive(false);
+                    isCreateField = false;
                 }
 
                 CropsWindow.SetActive(isActive);
