@@ -64,6 +64,7 @@ public class CropsEntity : MonoBehaviour
             }    
         }
 
+        /*
         // Clocking Time -> Test Code
         monthTime += Time.deltaTime;
         if (monthTime >= MonthTimer)
@@ -93,6 +94,7 @@ public class CropsEntity : MonoBehaviour
             workScale = 0;
             monthTime %= MonthTimer;
         }
+        */
     }
 
     #region Public Functions
