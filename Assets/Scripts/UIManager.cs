@@ -5,20 +5,20 @@ using UnityEngine;
 public class UIManager : MonoBehaviour
 {
     [SerializeField] private FenseGenerator fenseGenerator = null;
-    [SerializeField] private GameObject ButtonWindow = null;
+    [SerializeField] private GameObject BuildingWindow = null;
+    [SerializeField] private GameObject CropsWindow = null;
 
-    private bool isCreateFieldChecked = false;
-    private bool isExpendFieldChecked = false;
-    private bool isDeleteFieldChecked = false;
-
+    private bool isCreateField = false;
+    private bool isExpendField = false;
     private Coroutine fieldCoroutine = null;
 
     public void OnClickCreateField()
     {
-        if(isCreateFieldChecked)
+        if (isCreateField)
         {
-            isCreateFieldChecked = false;
+            isCreateField = false;
             StopCoroutine(fieldCoroutine);
+            fenseGenerator.DestroyFense(false);
             fenseGenerator.ClearFense();
             fenseGenerator.gameObject.SetActive(false);
         }
@@ -26,27 +26,30 @@ public class UIManager : MonoBehaviour
         {
             fenseGenerator.gameObject.SetActive(true);
             fieldCoroutine = StartCoroutine(fenseGenerator.UnConnectFieldCoroutine());
-            isCreateFieldChecked = true;
+            isCreateField = true;
         }
     }
 
-    public void OnClickStartBuild()
+    public void OnClickStartBuild(bool isExpension)
     {
-
+        StartCoroutine(fenseGenerator.GenerateField(isExpension));
     }
 
     public void OnClickExpendField()
     {
-        if (isExpendFieldChecked)
+        if (isExpendField)
         {
-            isExpendFieldChecked = false;
+            isExpendField = false;
             StopCoroutine(fieldCoroutine);
+            fenseGenerator.DestroyFense(true);
             fenseGenerator.ClearFense();
+            fenseGenerator.gameObject.SetActive(false);
         }
         else
+            fenseGenerator.gameObject.SetActive(true);
         {
             fieldCoroutine = StartCoroutine(fenseGenerator.ConnectFieldCoroutine());
-            isExpendFieldChecked = true;
+            isExpendField = true;
         }
     }
 
@@ -55,18 +58,58 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void SetActiveButtonWindows(bool isActive)
+    public void SetActiveButtonWindows(int type, bool isActive)
     {
-        ButtonWindow.SetActive(isActive);
-
-        if(!isActive)
+        switch(type)
         {
-            isCreateFieldChecked = false;
-            isExpendFieldChecked = false;
-            isDeleteFieldChecked = false;
-            StopCoroutine(fieldCoroutine);
-            fenseGenerator.ClearFense();
-            fenseGenerator.gameObject.SetActive(false);
+            case 0:
+                if (isExpendField)
+                {
+                    isExpendField = false;
+                    StopCoroutine(fieldCoroutine);
+                    fenseGenerator.ClearFense();
+                    CropsWindow.SetActive(false);
+                    fenseGenerator.gameObject.SetActive(false);
+                }
+
+                BuildingWindow.SetActive(isActive);
+                if(!isActive)
+                {
+                    if(fieldCoroutine != null)
+                    {
+                        StopCoroutine(fieldCoroutine);
+                        fieldCoroutine = null;
+                    }
+                    fenseGenerator.DestroyFense(false);
+                    fenseGenerator.ClearFense();
+                    fenseGenerator.gameObject.SetActive(false);
+                    isCreateField = false;
+                }
+                break;
+            case 1:
+                if (isCreateField)
+                {
+                    isCreateField = false;
+                    StopCoroutine(fieldCoroutine);
+                    fenseGenerator.ClearFense();
+                    BuildingWindow.SetActive(false);
+                    fenseGenerator.gameObject.SetActive(false);
+                }
+
+                CropsWindow.SetActive(isActive);
+                if (!isActive)
+                {
+                    if (fieldCoroutine != null)
+                    {
+                        StopCoroutine(fieldCoroutine);
+                        fieldCoroutine = null;
+                    }
+                    fenseGenerator.DestroyFense(true);
+                    fenseGenerator.ClearFense();
+                    fenseGenerator.gameObject.SetActive(false);
+                    isCreateField = false;
+                }
+                break;
         }
     }
 }
