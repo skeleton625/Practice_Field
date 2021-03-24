@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4199410695007116574}
   - component: {fileID: 7883118464367213462}
   - component: {fileID: 450176960486273315}
-  m_Layer: 2
+  m_Layer: 9
   m_Name: CropsEntity
   m_TagString: Crops
   m_Icon: {fileID: 0}
@@ -39,7 +39,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6882889256406414315}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d58dcdfdad65f134c8bf37171e10afde, type: 3}
   m_Name: 
@@ -58,6 +58,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 4
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
