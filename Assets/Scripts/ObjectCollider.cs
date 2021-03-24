@@ -5,6 +5,7 @@ using UnityEngine;
 public class ObjectCollider : MonoBehaviour
 {
     [SerializeField] private string CollidTag = "";
+    [SerializeField] private Vector3 InitScale = Vector3.zero;
 
     public bool IsUnCollid { get; private set; }
 
@@ -14,10 +15,7 @@ public class ObjectCollider : MonoBehaviour
         transform.parent = parent;
         transform.localPosition = new Vector3(0, -.5f, 0);
         transform.localRotation = Quaternion.identity;
-
-        Vector3 localScale = transform.localScale;
-        localScale.z = transform.localScale.x;
-        transform.localScale = localScale;
+        transform.localScale = InitScale;
     }
 
     private void OnEnable()
