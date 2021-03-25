@@ -7,8 +7,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private UIManager uiManager = null;
     [SerializeField] private TerrainGenerator Generator = null;
 
-    private int houseHashCode = 0;
-    private int cropsHashCode = 0;
     private Camera mainCamera = null;
 
     private void Start()
@@ -25,29 +23,18 @@ public class PlayerController : MonoBehaviour
             {
                 if (hit.transform.CompareTag("Building"))
                 {
-                    if (hit.transform.GetHashCode().Equals(houseHashCode))
-                    {
-                        uiManager.SetActiveButtonWindows(0, false);
-                        houseHashCode = 0;
-                    }
-                    else
-                    {
-                        uiManager.SetActiveButtonWindows(0, true);
-                        houseHashCode = hit.transform.GetHashCode();
-                    }
+                    uiManager.SetActiveButtonWindows(0, hit.transform.GetHashCode());
                 }
-
                 if (hit.transform.CompareTag("Crops"))
                 {
-                    if (hit.transform.GetHashCode().Equals(cropsHashCode))
+                    if(uiManager.IsDeleteField)
                     {
-                        uiManager.SetActiveButtonWindows(1, false);
-                        cropsHashCode = 0;
+                        Destroy(hit.transform.gameObject);
                     }
                     else
                     {
-                        uiManager.SetActiveButtonWindows(1, true);
-                        cropsHashCode = hit.transform.GetHashCode();
+                        uiManager.ChangeCropsCount(hit.transform.GetComponent<CropsEntity>().CropsCount);
+                        uiManager.SetActiveButtonWindows(1, hit.transform.GetHashCode());
                     }
                 }
             }    
