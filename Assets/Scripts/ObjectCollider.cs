@@ -13,7 +13,7 @@ public class ObjectCollider : MonoBehaviour
     {
         IsUnCollid = true;
         transform.parent = parent;
-        transform.localPosition = new Vector3(0, -.5f, 0);
+        transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
         transform.localScale = InitScale;
     }
