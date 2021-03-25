@@ -64,7 +64,6 @@ public class CropsEntity : MonoBehaviour
             }    
         }
 
-        /*
         // Clocking Time -> Test Code
         monthTime += Time.deltaTime;
         if (monthTime >= MonthTimer)
@@ -94,7 +93,6 @@ public class CropsEntity : MonoBehaviour
             workScale = 0;
             monthTime %= MonthTimer;
         }
-        */
     }
 
     #region Public Functions
@@ -118,6 +116,8 @@ public class CropsEntity : MonoBehaviour
     public void AddCrops(List<Transform> cropsList)
     {
         this.cropsList.AddRange(cropsList);
+        while(CropsCount > 100)
+            cropsList.RemoveAt(CropsCount - 1);
     }
     #endregion
 
