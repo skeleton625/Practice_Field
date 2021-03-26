@@ -1,22 +1,41 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GPUInstancer;
 
 public class TerrainGenerator : MonoBehaviour
 {
+    [SerializeField] GPUInstancerDetailManager detailManager = null;
+
     private Terrain mainTerrain = null;
+
+    private int width;
+    private int height;
+    private int[,] detailArrays = null;
     private float[,,] terrainLayers = null;
 
     private void Awake()
     {
         mainTerrain = GetComponent<Terrain>();
-        int size = mainTerrain.terrainData.alphamapResolution;
-        terrainLayers = new float[size, size, mainTerrain.terrainData.alphamapLayers];
-        for (int z = 0; z < size; z++)
-            for (int x = 0; x < size; x++)
+        width = height = mainTerrain.terrainData.alphamapResolution;
+        terrainLayers = new float[width, height, mainTerrain.terrainData.alphamapLayers];
+        for (int z = 0; z < width; z++)
+        {
+            for (int x = 0; x < height; x++)
                 terrainLayers[z, x, 0] = 1;
+        }
 
-        mainTerrain.terrainData.SetAlphamaps(0, 0, terrainLayers);
+        detailArrays = new int[width, height];
+        for (int z = 512; z < 1536; z++)
+        {
+            for(int x = 512; x < 1536; x++)
+            {
+                detailArrays[z, x] = 2;
+            }
+        }
+
+        ApplyTerrainLayers();
+        ApplyTerrainDetail();
     }
 
     public void SetTerrainLayer(int x, int z, int type)
@@ -53,5 +72,35 @@ public class TerrainGenerator : MonoBehaviour
     public void ApplyTerrainLayers()
     {
         mainTerrain.terrainData.SetAlphamaps(0, 0, terrainLayers);
+    }
+
+    public void RemoveTerrainDetail(MeshCollider meshCollider, Vector3 center, Vector3 size, float offset)
+    {
+        detailManager.RemoveInstancesInsideMeshCollider(meshCollider, center, size / 2, offset);
+    }
+
+    public void RemoveTerrainDetail(int sx, int sz, ref bool[,] details)
+    {
+        for(int z = 0; z < details.GetLength(0); z++)
+        {
+            for (int x = 0; x < details.GetLength(1); x++)
+            {
+                if (details[z, x])
+                    detailArrays[z + sz, x + sx] = 0;
+            }
+        }
+
+        List<int[,]> detailMap = new List<int[,]>();
+        detailMap.Add(detailArrays);
+        detailManager.SetDetailMapData(detailMap);
+        GPUInstancerAPI.UpdateDetailInstances(detailManager, true);
+    }
+
+    public void ApplyTerrainDetail()
+    {
+        List<int[,]> detailMap = new List<int[,]>();
+        detailMap.Add(detailArrays);
+        detailManager.SetDetailMapData(detailMap);
+        GPUInstancerAPI.InitializeGPUInstancer(detailManager);
     }
 }

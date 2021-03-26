@@ -1,19 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GPUInstancer;
 
 public class FenseGenerator : MonoBehaviour
 {
+    [Header("GPUInstancecr")]
+    [SerializeField] private GPUInstancerPrefabManager prefabManager = null;
+
     [Header("Generator Float Settings")]
     /* width = 22, height = 22 -> DefaultLengthLimit = 22 * 22 = 484 */
     [SerializeField] private float DefaultLengthLimit = 0f;
     [SerializeField] private float CropsAlpha = 1f;
     [SerializeField] private float[] BuildPeriod = null;
     [Header("Generator Fense Settings")]
+    [SerializeField] private GPUInstancerPrefab Fense = null;
     [SerializeField] private ObjectCollider[] FenseCollider = null;
     [SerializeField] private Transform FensePoleVisual = null;
     [SerializeField] private Transform FensePole = null;
-    [SerializeField] private Transform Fense = null;
     [SerializeField] private Material VisualMaterial = null;
     [SerializeField] private LayerMask RayMask = default;
     [SerializeField] private Color EnableColor = Color.black;
@@ -24,10 +28,13 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private TestAI TestPlayerAI = null;
     [SerializeField] private TerrainGenerator Generator = null;
 
+
+    private bool[,] cropsDetail = null;
+    private float[,] cropsLayer = null;
+
     private int poleCount = 0;
     private int connectHash = 0;
     private float lengthLimit = 0f;
-    private float[,] cropsLayer = null;
     private bool isEnable = true;
     private bool isBuilding = false;
     private bool isPoleConnect = false;
@@ -264,7 +271,14 @@ public class FenseGenerator : MonoBehaviour
                             Destroy(poleTransform[i].GetChild(0).gameObject);
                         break;
                     case 1:
+                        Vector3 center = Vector3.zero;
+                        for (int i = 0; i < 4; i++)
+                            center += poleTransform[i].position;
+                        center /= 4f;
+                        Vector3 size = new Vector3(center.x - startPosition.x, 0, center.z - startPosition.y);
                         Generator.ApplyTerrainLayers(startPosition.x, startPosition.y, 1, ref cropsLayer);
+                        //Generator.RemoveTerrainDetail(createCrops.GetComponent<MeshCollider>(), center, size, 1f);
+                        Generator.RemoveTerrainDetail(startPosition.x, startPosition.y, ref cropsDetail);
                         if (isExpension)
                             createCrops.AddCrops(cropsTransform);
                         else
@@ -289,6 +303,11 @@ public class FenseGenerator : MonoBehaviour
         }
     }
 
+    public IEnumerator DestroyField()
+    {
+        yield return null;
+    }
+
     private List<Transform> GenerateCrops(ref Vector2Int startPosition)
     {
         float centerX = 0f, centerZ = 0f;
@@ -311,6 +330,7 @@ public class FenseGenerator : MonoBehaviour
         int ex = (int)(centerX + 12);
         int ez = (int)(centerZ + 12);
         var cropsTrans = new List<Transform>();
+        cropsDetail = new bool[ez - sz + 1, ex - sx + 1];
         cropsLayer = new float[ez - sz + 1, ex - sx + 1];
         for (int x = sx; x <= ex; x++)
         {
@@ -342,7 +362,10 @@ public class FenseGenerator : MonoBehaviour
                 }
 
                 if (inDirt && (dirtX % 2).Equals(1))
+                {
                     cropsLayer[fixedPosition.z - sz, fixedPosition.x - sx] = 1f;
+                    cropsDetail[fixedPosition.z - sz, fixedPosition.x - sx] = true;
+                }
 
                 if (inCrops && (cropsX % 2).Equals(1) && (cropsZ % 2).Equals(1) &&
                     (x % 2).Equals(0) && (z % 2).Equals(0))
@@ -379,9 +402,10 @@ public class FenseGenerator : MonoBehaviour
         {
             var position = Vector3.Lerp(start, end, i);
             var fense = Instantiate(Fense, position, Quaternion.identity);
-            fense.SetParent(createCrops.transform);
-            fense.localScale *= scale;
-            fense.LookAt(end);
+            fense.transform.SetParent(createCrops.transform);
+            fense.transform.localScale *= scale;
+            fense.transform.LookAt(end);
+            GPUInstancerAPI.AddPrefabInstance(prefabManager, fense);
         }
     }
 
