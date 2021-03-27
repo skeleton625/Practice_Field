@@ -184,29 +184,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58f3c353ca55f9345af320728a786140, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultLengthLimit: 484
+  prefabManager: {fileID: 0}
   CropsAlpha: 1
-  BuildPeriod:
-  - 1
-  - 1
-  FenseCollider:
-  - {fileID: 4115599999047214382}
-  - {fileID: 4115599997799148396}
-  FensePoleVisual: {fileID: 3474993663163416134}
-  FensePole: {fileID: 1902797922024719468, guid: dc2215539532df14695597747ad02eb4, type: 3}
-  Fense: {fileID: 7247259158651270367, guid: 6ec0613b910c06946aeed3f28b22c33f, type: 3}
-  VisualMaterial: {fileID: 2100000, guid: d697a3b418eec4e4cb27a1628fa8eee4, type: 2}
-  RayMask:
-    serializedVersion: 2
-    m_Bits: 4096
-  EnableColor: {r: 0, g: 0.73424315, b: 1, a: 0.39215687}
-  DisableColor: {r: 1, g: 0.01978819, b: 0, a: 0.39215687}
   CropsDatas:
   - {fileID: 11400000, guid: 2dbb7a1c535b2e5459b152bd84a6abd9, type: 2}
   - {fileID: 11400000, guid: 8c44aea6273bf5141823e89f5e8cc906, type: 2}
   CropsParent: {fileID: 7883118464367213462, guid: cdf07a023a0043b47be184a3aa6ef4e3, type: 3}
-  TestPlayerAI: {fileID: 1153893191337339672, guid: c43f6dea68b2e1844bb3e292b75d319c, type: 3}
+  FenseLimit: 484
+  RayMask:
+    serializedVersion: 2
+    m_Bits: 4096
+  FensePole: {fileID: 1902797922024719468, guid: dc2215539532df14695597747ad02eb4, type: 3}
+  Fense: {fileID: 1156220535728656782, guid: 6ec0613b910c06946aeed3f28b22c33f, type: 3}
+  FenseCollider:
+  - {fileID: 4115599999047214382}
+  - {fileID: 4115599997799148396}
+  GeneratorVisual: {fileID: 3474993663163416134}
+  VisualMaterial: {fileID: 2100000, guid: d697a3b418eec4e4cb27a1628fa8eee4, type: 2}
+  EnableColor: {r: 0, g: 0.73424315, b: 1, a: 0.39215687}
+  DisableColor: {r: 1, g: 0.01978819, b: 0, a: 0.39215687}
   Generator: {fileID: 0}
+  BuildPeriod:
+  - 1
+  - 1
+  TestPlayerAI: {fileID: 1153893191337339672, guid: c43f6dea68b2e1844bb3e292b75d319c, type: 3}
 --- !u!1 &4115599999047214379
 GameObject:
   m_ObjectHideFlags: 0

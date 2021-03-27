@@ -535,7 +535,7 @@ MonoBehaviour:
   showPrototypeBox: 1
   showAdvancedBox: 0
   showHelpText: 0
-  showDebugBox: 1
+  showDebugBox: 0
   showGlobalValuesBox: 1
   showRegisteredPrefabsBox: 0
   showPrototypesBox: 1
@@ -547,7 +547,7 @@ MonoBehaviour:
   isQuiting: 0
   layerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 7987
   lightProbeDisabled: 0
   _terrain: {fileID: 1593621812}
   additionalTerrains: []
@@ -1014,7 +1014,7 @@ MeshRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  - {fileID: 2100000, guid: ae5045e883c70a646864748c5d96d829, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
