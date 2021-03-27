@@ -46,6 +46,7 @@ public class TerrainGenerator : MonoBehaviour
 
     public void ApplyTerrainLayers(int sx, int sz, int i, ref float[,] layers)
     {
+        int[,] intLayers = new int[layers.GetLength(0), layers.GetLength(1)];
         float[,,] tmpLayers = new float[layers.GetLength(0), layers.GetLength(1), terrainLayers.GetLength(2)];
 
         for(int z = 0; z < layers.GetLength(0); z++)
@@ -67,6 +68,8 @@ public class TerrainGenerator : MonoBehaviour
         }    
 
         mainTerrain.terrainData.SetAlphamaps(sx, sz, tmpLayers);
+        mainTerrain.terrainData.SetDetailLayer(sx, sz, 0, intLayers);
+        GPUInstancerAPI.UpdateDetailInstances(detailManager, true);
     }
 
     public void ApplyTerrainLayers()
