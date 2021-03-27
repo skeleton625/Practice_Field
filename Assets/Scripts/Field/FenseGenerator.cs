@@ -7,38 +7,37 @@ public class FenseGenerator : MonoBehaviour
 {
     [Header("GPUInstancecr")]
     [SerializeField] private GPUInstancerPrefabManager prefabManager = null;
-
-    [Header("Generator Float Settings")]
-    /* width = 22, height = 22 -> DefaultLengthLimit = 22 * 22 = 484 */
-    [SerializeField] private float DefaultLengthLimit = 0f;
+    [Header("Crops Settings")]
     [SerializeField] private float CropsAlpha = 1f;
-    [SerializeField] private float[] BuildPeriod = null;
-    [Header("Generator Fense Settings")]
-    [SerializeField] private GPUInstancerPrefab Fense = null;
-    [SerializeField] private ObjectCollider[] FenseCollider = null;
-    [SerializeField] private Transform FensePoleVisual = null;
-    [SerializeField] private Transform FensePole = null;
-    [SerializeField] private Material VisualMaterial = null;
-    [SerializeField] private LayerMask RayMask = default;
-    [SerializeField] private Color EnableColor = Color.black;
-    [SerializeField] private Color DisableColor = Color.black;
-    [Header("Generator Crops Settings")]
     [SerializeField] private CropsData[] CropsDatas = null;
     [SerializeField] private CropsEntity CropsParent = null;
-    [SerializeField] private TestAI TestPlayerAI = null;
+    [Header("Fense Settings")]
+    /* width = 22, height = 22 -> FenseLimit = 22 * 22 = 484 */
+    [SerializeField] private float FenseLimit = 0f;
+    [SerializeField] private LayerMask RayMask = default;
+    [SerializeField] private Transform FensePole = null;
+    [SerializeField] private GPUInstancerPrefab Fense = null;
+    [SerializeField] private ObjectCollider[] FenseCollider = null;
+    [Header("Visual Settings")]
+    [SerializeField] private Transform GeneratorVisual = null;
+    [SerializeField] private Material VisualMaterial = null;
+    [SerializeField] private Color EnableColor = Color.black;
+    [SerializeField] private Color DisableColor = Color.black;
     [SerializeField] private TerrainGenerator Generator = null;
-
+    [Header("CropsEntity Settings")]
+    [SerializeField] private float[] BuildPeriod = null;
+    [SerializeField] private TestAI TestPlayerAI = null;
 
     private bool[,] cropsDetail = null;
     private float[,] cropsLayer = null;
 
     private int poleCount = 0;
     private int connectHash = 0;
-    private float lengthLimit = 0f;
     private bool isEnable = true;
     private bool isBuilding = false;
     private bool isPoleConnect = false;
     private Vector3 colliderScale = Vector3.zero;
+    private Vector2Int startPosition = Vector2Int.zero;
 
     private Camera mainCamera = null;
     private CropsEntity createCrops = null;
@@ -59,7 +58,6 @@ public class FenseGenerator : MonoBehaviour
     {
         colliderScale = FenseCollider[0].transform.localScale;
         VisualMaterial.SetColor("_BaseColor", EnableColor);
-        lengthLimit = DefaultLengthLimit;
         poleTransform.Clear();
     }
 
@@ -76,15 +74,12 @@ public class FenseGenerator : MonoBehaviour
                 return;
 
             isPoleConnect = true;
-            FensePoleVisual.SetParent(null);
-            FensePoleVisual.position = other.transform.position;
+            GeneratorVisual.SetParent(null);
+            GeneratorVisual.position = other.transform.position;
 
             var entity = other.transform.parent.GetComponent<CropsEntity>();
             if (entity && entity.enabled && poleCount.Equals(0))
-            {
                 createCrops = entity;
-                lengthLimit = DefaultLengthLimit - (entity.CropsCount * 4.84f);
-            }
         }
     }
 
@@ -93,14 +88,11 @@ public class FenseGenerator : MonoBehaviour
         if (other.CompareTag("FensePole"))
         {
             isPoleConnect = false;
-            FensePoleVisual.SetParent(transform);
-            FensePoleVisual.localPosition = Vector3.zero;
+            GeneratorVisual.SetParent(transform);
+            GeneratorVisual.localPosition = Vector3.zero;
 
             if (poleCount.Equals(0))
-            {
                 createCrops = null;
-                lengthLimit = DefaultLengthLimit;
-            }
         }
     }
     #endregion
@@ -115,8 +107,7 @@ public class FenseGenerator : MonoBehaviour
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, 1000f, RayMask) &&
                 hit.transform.CompareTag("Terrain"))
             {
-                Vector3 fixedPosition = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
-                transform.position = fixedPosition;
+                transform.position = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
 
                 var flag = FenseCollider[0].IsUnCollid;
                 switch (poleCount)
@@ -126,14 +117,14 @@ public class FenseGenerator : MonoBehaviour
                         break;
                     case 1:
                     case 2:
-                        MoveFenseCollider(0, poleTransform[poleCount - 1].position, FensePoleVisual.position);
-                        flag &= !isPoleConnect && IsBelowLimit(poleTransform[poleCount - 1].position, FensePoleVisual.position);
+                        MoveFenseCollider(0, poleTransform[poleCount - 1].position, GeneratorVisual.position);
+                        flag &= !isPoleConnect && IsBelowLimit(poleTransform[poleCount - 1].position, GeneratorVisual.position);
                         break;
                     case 3:
-                        MoveFenseCollider(0, poleTransform[poleCount - 1].position, FensePoleVisual.position);
-                        MoveFenseCollider(1, poleTransform[0].position, FensePoleVisual.position);
-                        flag &= isPoleConnect && FenseCollider[1].IsUnCollid && IsSquareForm(FensePoleVisual.position) &&
-                                IsBelowLimit(poleTransform[poleCount - 1].position, FensePoleVisual.position);
+                        MoveFenseCollider(0, poleTransform[poleCount - 1].position, GeneratorVisual.position);
+                        MoveFenseCollider(1, poleTransform[0].position, GeneratorVisual.position);
+                        flag &= isPoleConnect && FenseCollider[1].IsUnCollid && IsSquareForm(GeneratorVisual.position) &&
+                                IsBelowLimit(poleTransform[poleCount - 1].position, GeneratorVisual.position);
                         break;
                     default:
                         flag = false;
@@ -143,7 +134,7 @@ public class FenseGenerator : MonoBehaviour
 
                 if (Input.GetMouseButtonDown(0) && isEnable)
                 {
-                    var position = new Vector3(FensePoleVisual.position.x, hit.point.y, FensePoleVisual.position.z);
+                    var position = new Vector3(GeneratorVisual.position.x, hit.point.y, GeneratorVisual.position.z);
                     var pole = Instantiate(FensePole, position, Quaternion.identity);
                     poleTransform.Add(pole);
                     switch (poleCount)
@@ -163,6 +154,7 @@ public class FenseGenerator : MonoBehaviour
                             break;
                         case 3:
                             GenerateCollider(expendCrops);
+                            GenerateCrops(true);
                             break;
                     }
                     ++poleCount;
@@ -187,27 +179,26 @@ public class FenseGenerator : MonoBehaviour
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, 1000f, RayMask) &&
                 hit.transform.CompareTag("Terrain"))
             {
-                Vector3 fixedPosition = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
-                transform.position = fixedPosition;
+                transform.position = new Vector3((int)hit.point.x, hit.point.y, (int)hit.point.z);
 
                 bool flag = !isPoleConnect && FenseCollider[0].IsUnCollid;
                 if (poleCount > 3)
                     flag = false;
                 else if (poleCount > 0)
                 {
-                    MoveFenseCollider(0, poleTransform[poleCount - 1].position, FensePoleVisual.position);
-                    flag &= IsBelowLimit(poleTransform[poleCount - 1].position, FensePoleVisual.position);
+                    MoveFenseCollider(0, poleTransform[poleCount - 1].position, GeneratorVisual.position);
+                    flag &= IsBelowLimit(poleTransform[poleCount - 1].position, GeneratorVisual.position);
                     if (poleCount.Equals(3))
                     {
-                        MoveFenseCollider(1, poleTransform[0].position, FensePoleVisual.position);
-                        flag &= FenseCollider[1].IsUnCollid && IsSquareForm(FensePoleVisual.position) && IsBelowLimit(poleTransform[0].position, FensePoleVisual.position);
+                        MoveFenseCollider(1, poleTransform[0].position, GeneratorVisual.position);
+                        flag &= FenseCollider[1].IsUnCollid && IsSquareForm(GeneratorVisual.position) && IsBelowLimit(poleTransform[0].position, GeneratorVisual.position);
                     }
                 }
                 ChangeVisualColor(flag);
 
                 if (Input.GetMouseButtonDown(0) && isEnable)
                 {
-                    var position = new Vector3(FensePoleVisual.position.x, hit.point.y, FensePoleVisual.position.z);
+                    var position = new Vector3(GeneratorVisual.position.x, hit.point.y, GeneratorVisual.position.z);
                     var pole = Instantiate(FensePole, position, Quaternion.identity);
                     poleTransform.Add(pole);
                     switch (poleCount)
@@ -227,6 +218,7 @@ public class FenseGenerator : MonoBehaviour
                             break;
                         case 3:
                             GenerateCollider(createCrops);
+                            GenerateCrops(false);
                             break;
                     }
                     ++poleCount;
@@ -249,8 +241,6 @@ public class FenseGenerator : MonoBehaviour
         int timeI = 0;
         float timer = 0;
         float limitTimer = BuildPeriod[0];
-        Vector2Int startPosition = Vector2Int.zero;
-        List<Transform> cropsTransform = GenerateCrops(ref startPosition);
 
         while (true)
         {
@@ -271,18 +261,22 @@ public class FenseGenerator : MonoBehaviour
                             Destroy(poleTransform[i].GetChild(0).gameObject);
                         break;
                     case 1:
-                        Vector3 center = Vector3.zero;
-                        for (int i = 0; i < 4; i++)
-                            center += poleTransform[i].position;
-                        center /= 4f;
-                        Vector3 size = new Vector3(center.x - startPosition.x, 0, center.z - startPosition.y);
                         Generator.ApplyTerrainLayers(startPosition.x, startPosition.y, 1, ref cropsLayer);
-                        //Generator.RemoveTerrainDetail(createCrops.GetComponent<MeshCollider>(), center, size, 1f);
-                        Generator.RemoveTerrainDetail(startPosition.x, startPosition.y, ref cropsDetail);
+                        //Generator.RemoveTerrainDetail(startPosition.x, startPosition.y, ref cropsDetail);
+
                         if (isExpension)
-                            createCrops.AddCrops(cropsTransform);
+                        {
+                            var children = new List<Transform>();
+                            foreach (Transform child in expendCrops.transform)
+                                children.Add(child);
+
+                            foreach (Transform child in children)
+                                child.parent = createCrops.transform;
+                            createCrops.AddCrops(expendCrops);
+                            Destroy(expendCrops.gameObject);
+                        }
                         else
-                            createCrops.Initialize(CropsDatas[0], cropsTransform);
+                            createCrops.Initialize(CropsDatas[0]);
                         break;
                 }
 
@@ -308,7 +302,7 @@ public class FenseGenerator : MonoBehaviour
         yield return null;
     }
 
-    private List<Transform> GenerateCrops(ref Vector2Int startPosition)
+    private void GenerateCrops(bool isExpension)
     {
         float centerX = 0f, centerZ = 0f;
         List<Vector3> dirtPosition = new List<Vector3>();
@@ -321,20 +315,20 @@ public class FenseGenerator : MonoBehaviour
         centerX /= 4f;
         centerZ /= 4f;
 
-        var direction = (poleTransform[3].position - poleTransform[0].position).normalized;
-        var rotationY = Mathf.Acos(Vector3.Dot(direction, -Vector3.right)) * 180 / Mathf.PI;
-
         int odd = 0;
         int sx = (int)(centerX - 12);
         int sz = (int)(centerZ - 12);
         int ex = (int)(centerX + 12);
         int ez = (int)(centerZ + 12);
-        var cropsTrans = new List<Transform>();
+        var direction = (poleTransform[3].position - poleTransform[0].position).normalized;
+        var rotationY = Mathf.Acos(Vector3.Dot(direction, Vector3.right)) * 180 / Mathf.PI;
+        var cropsFieldList = new List<Transform>();
+
         cropsDetail = new bool[ez - sz + 1, ex - sx + 1];
         cropsLayer = new float[ez - sz + 1, ex - sx + 1];
         for (int x = sx; x <= ex; x++)
         {
-            var tmpList = new List<Transform>();
+            var cropsLineList = new List<Transform>();
             for (int z = sz; z <= ez; z++)
             {
                 var position = Quaternion.Euler(0, rotationY, 0) * new Vector3(x - centerX, 0, z - centerZ);
@@ -373,21 +367,25 @@ public class FenseGenerator : MonoBehaviour
                     var crops = Instantiate(CropsDatas[0].Visual, position, Quaternion.identity);
                     crops.SetParent(createCrops.transform);
                     crops.gameObject.SetActive(false);
-                    tmpList.Add(crops);
+                    cropsLineList.Add(crops);
                 }
             }
 
             if ((x % 2).Equals(0))
             {
                 ++odd;
-                if ((odd % 2).Equals(1)) tmpList.Reverse();
-                cropsTrans.AddRange(tmpList);
+                if ((odd % 2).Equals(1))
+                    cropsLineList.Reverse();
+                cropsFieldList.AddRange(cropsLineList);
             }
         }
 
         startPosition.x = sx - 1;
         startPosition.y = sz - 1;
-        return cropsTrans;
+        if (isExpension)
+            expendCrops.AddCrops(cropsFieldList);
+        else
+            createCrops.AddCrops(cropsFieldList);
     }
     #endregion
 
@@ -449,21 +447,12 @@ public class FenseGenerator : MonoBehaviour
 
         createCrops.transform.position = defaultPos1;
         expendCrops.transform.position = defaultPos2;
-
-        var children = new List<Transform>();
-        foreach (Transform child in expendCrops.transform)
-            children.Add(child);
-
-        foreach (Transform child in children)
-            child.parent = createCrops.transform;
-        Destroy(expendCrops.gameObject);
     }
 
     public void ClearFense()
     {
         if(!isBuilding)
         {
-            lengthLimit = DefaultLengthLimit;
             poleTransform.Clear();
             poleCount = 0;
 
@@ -473,10 +462,10 @@ public class FenseGenerator : MonoBehaviour
             expendCrops = null;
             VisualMaterial.SetColor("_BaseColor", EnableColor);
 
-            FensePoleVisual.SetParent(transform);
-            FensePoleVisual.localPosition = Vector3.zero;
-            FenseCollider[0].ClearCollider(FensePoleVisual);
-            FenseCollider[1].ClearCollider(FensePoleVisual);
+            GeneratorVisual.SetParent(transform);
+            GeneratorVisual.localPosition = Vector3.zero;
+            FenseCollider[0].ClearCollider(GeneratorVisual);
+            FenseCollider[1].ClearCollider(GeneratorVisual);
         }
     }
 
@@ -528,7 +517,7 @@ public class FenseGenerator : MonoBehaviour
 
     private bool IsBelowLimit(Vector3 prevPos, Vector3 nextPos)
     {
-        return (prevPos - nextPos).sqrMagnitude < lengthLimit;
+        return (prevPos - nextPos).sqrMagnitude < FenseLimit;
     }
 
     private bool IsSquareForm(Vector3 lastPosition)

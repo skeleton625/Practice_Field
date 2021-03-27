@@ -96,14 +96,13 @@ public class CropsEntity : MonoBehaviour
     }
 
     #region Public Functions
-    public void Initialize(CropsData cropsData, List<Transform> cropsList)
+    public void Initialize(CropsData cropsData)
     {
         humanTime = 0;
         monthTime = 0;
         monthCount = 0;
         cropsScale = cropsData.CropsMaxHeight / cropsData.GrowthCount;
         this.cropsData = cropsData;
-        this.cropsList = cropsList;
     }
 
     public void SetWorking(TestAI workingAI, bool isWorkStarting)
@@ -118,6 +117,11 @@ public class CropsEntity : MonoBehaviour
         this.cropsList.AddRange(cropsList);
         while(CropsCount > 100)
             cropsList.RemoveAt(CropsCount - 1);
+    }
+
+    public void AddCrops(CropsEntity entity)
+    {
+        cropsList.AddRange(entity.cropsList);
     }
     #endregion
 

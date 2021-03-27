@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-
+﻿
 public class FieldData
 {
     public int sx = 0, sz = 0;
