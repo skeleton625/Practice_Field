@@ -16,7 +16,8 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private float FenseLimit = 0f;
     [SerializeField] private LayerMask RayMask = default;
     [SerializeField] private Transform FensePole = null;
-    [SerializeField] private GPUInstancerPrefab Fense = null;
+    [SerializeField] private GPUInstancerPrefab FenseSide = null;
+    [SerializeField] private GPUInstancerPrefab FenseMain = null;
     [SerializeField] private ObjectCollider[] FenseCollider = null;
     [Header("Visual Settings")]
     [SerializeField] private Transform GeneratorVisual = null;
@@ -155,6 +156,7 @@ public class FenseGenerator : MonoBehaviour
                         case 3:
                             GenerateCollider(expendCrops);
                             GenerateCrops(true);
+                            UIManager.Instance.ChangeCropsCount(true, createCrops.CropsCount);
                             break;
                     }
                     ++poleCount;
@@ -163,8 +165,7 @@ public class FenseGenerator : MonoBehaviour
 
                 if (Input.GetKeyDown(KeyCode.R))
                 {
-                    DestroyFense(true);
-                    ClearFense();
+                    DestroyPrevFense(true);
                 }
             }
             yield return null;
@@ -219,6 +220,7 @@ public class FenseGenerator : MonoBehaviour
                         case 3:
                             GenerateCollider(createCrops);
                             GenerateCrops(false);
+                            UIManager.Instance.ChangeCropsCount(false, createCrops.CropsCount);
                             break;
                     }
                     ++poleCount;
@@ -227,8 +229,7 @@ public class FenseGenerator : MonoBehaviour
 
                 if(Input.GetKeyDown(KeyCode.R))
                 {
-                    DestroyFense(false);
-                    ClearFense();
+                    DestroyPrevFense(false);
                 }
             }
             yield return null;
@@ -392,19 +393,26 @@ public class FenseGenerator : MonoBehaviour
     #region Fense Functions
     private void GenerateFense(Vector3 start, Vector3 end)
     {
-        var length = Vector3.Distance(start, end);
-        var rate = 1f / length;
-        var scale = Vector3.Distance(start, Vector3.Lerp(start, end, rate));
+        var direction = (end - start).normalized / 4f;
+        var startPosition = start + direction;
+        var endPosition = end - direction;
+        var fenseEnd = Instantiate(FenseSide, endPosition, Quaternion.identity);
+        fenseEnd.transform.SetParent(createCrops.transform);
+        fenseEnd.transform.LookAt(start);
+        var fenseStart = Instantiate(FenseSide, startPosition, Quaternion.identity);
+        fenseStart.transform.SetParent(createCrops.transform);
+        fenseStart.transform.LookAt(end);
 
-        for (float i = rate; i < .95f; i += rate)
-        {
-            var position = Vector3.Lerp(start, end, i);
-            var fense = Instantiate(Fense, position, Quaternion.identity);
-            fense.transform.SetParent(createCrops.transform);
-            fense.transform.localScale *= scale;
-            fense.transform.LookAt(end);
-            GPUInstancerAPI.AddPrefabInstance(prefabManager, fense);
-        }
+        var fenseScale = FenseMain.transform.localScale;
+        fenseScale.z = Vector3.Distance(endPosition, startPosition);
+        var fenseMid = Instantiate(FenseMain, Vector3.Lerp(startPosition, endPosition, .5f), Quaternion.identity);
+        fenseMid.transform.SetParent(createCrops.transform);
+        fenseMid.transform.localScale = fenseScale;
+        fenseMid.transform.LookAt(end);
+
+        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseStart);
+        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseEnd);
+        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseMid);
     }
 
     private void GenerateCollider(CropsEntity entity)
@@ -489,6 +497,30 @@ public class FenseGenerator : MonoBehaviour
                     createCrops = null;
                 }
             }
+        }
+    }
+
+    private void DestroyPrevFense(bool isExpension)
+    {
+        switch(poleCount)
+        {
+            case 1:
+                DestroyFense(isExpension);
+                ClearFense();
+                break;
+            case 2:
+            case 3:
+                poleCount--;
+                Destroy(poleTransform[poleCount].gameObject);
+                break;
+            case 4:
+                if (isExpension)
+                    expendCrops.GetComponent<MeshCollider>().sharedMesh = null;
+                else
+                    createCrops.GetComponent<MeshCollider>().sharedMesh = null;
+                poleCount--;
+                Destroy(poleTransform[poleCount].gameObject);
+                break;
         }
     }
     #endregion
