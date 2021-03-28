@@ -35,6 +35,11 @@ public class CropsEntity : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        cropsList = new List<Transform>();
+    }
+
     private void Update()
     {
         if (isWorkStarting)
