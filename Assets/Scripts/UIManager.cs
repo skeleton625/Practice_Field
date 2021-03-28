@@ -7,7 +7,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private FenseGenerator fenseGenerator = null;
     [SerializeField] private GameObject CreateWindow = null;
     [SerializeField] private GameObject ExpendWindow = null;
-    [SerializeField] private Text CropsCount = null;
+    [SerializeField] private Text CreateCropsCount = null;
+    [SerializeField] private Text ExpendCropsCount = null;
     [SerializeField] private Color PossColor = Color.white;
     [SerializeField] private Color ImpossColor = Color.red;
 
@@ -19,6 +20,12 @@ public class UIManager : MonoBehaviour
     private Coroutine fieldCoroutine = null;
 
     public bool IsDeleteField { get => isDeleteField; }
+    public static UIManager Instance = null;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public void OnClickCreateField()
     {
@@ -50,13 +57,24 @@ public class UIManager : MonoBehaviour
         isDeleteField = !isDeleteField;
     }
 
-    public void ChangeCropsCount(int cropsCount)
+    public void ChangeCropsCount(bool isExpension, int cropsCount)
     {
-        if (cropsCount > 97)
-            CropsCount.color = ImpossColor;
+        if(isExpension)
+        {
+            if (cropsCount > 97)
+                ExpendCropsCount.color = ImpossColor;
+            else
+                ExpendCropsCount.color = PossColor;
+            ExpendCropsCount.text = cropsCount.ToString();
+        }
         else
-            CropsCount.color = PossColor;
-        CropsCount.text = cropsCount.ToString();
+        {
+            if (cropsCount > 97)
+                CreateCropsCount.color = ImpossColor;
+            else
+                CreateCropsCount.color = PossColor;
+            CreateCropsCount.text = cropsCount.ToString();
+        }
         preCropsCount = cropsCount;
     }
 
