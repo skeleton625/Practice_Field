@@ -195,7 +195,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4096
   FensePole: {fileID: 1902797922024719468, guid: dc2215539532df14695597747ad02eb4, type: 3}
-  Fense: {fileID: 1156220535728656782, guid: 6ec0613b910c06946aeed3f28b22c33f, type: 3}
+  FenseSide: {fileID: 2103206783093239226, guid: 172e9c6e386790549bb270c8b62019dd, type: 3}
+  FenseMain: {fileID: 5982070537979377752, guid: f0c517701607e824db0da5693cfaad68, type: 3}
   FenseCollider:
   - {fileID: 4115599999047214382}
   - {fileID: 4115599997799148396}
