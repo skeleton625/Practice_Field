@@ -33,7 +33,7 @@ public class PlayerController : MonoBehaviour
                     }
                     else
                     {
-                        uiManager.ChangeCropsCount(true, hit.transform.GetComponent<CropsEntity>().CropsCount);
+                        uiManager.ChangeCropsCount(2, hit.transform.GetComponent<CropsEntity>().CropsCount);
                         uiManager.SetActiveButtonWindows(1, hit.transform.GetHashCode());
                     }
                 }

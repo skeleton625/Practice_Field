@@ -8,9 +8,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject CreateWindow = null;
     [SerializeField] private GameObject ExpendWindow = null;
     [SerializeField] private Text CreateCropsCount = null;
-    [SerializeField] private Text ExpendCropsCount = null;
-    [SerializeField] private Color PossColor = Color.white;
-    [SerializeField] private Color ImpossColor = Color.red;
+    [SerializeField] private Text ExpendEntireCount = null;
+    [SerializeField] private Text ExpendCurrentCount = null;
 
     private int buildngHash = 0;
     private int preCropsCount = 0;
@@ -39,7 +38,7 @@ public class UIManager : MonoBehaviour
 
     public void OnClickExpendField()
     {
-        if(!isExpendField && preCropsCount < 100)
+        if(!isExpendField)
         {
             fenseGenerator.gameObject.SetActive(true);
             fieldCoroutine = StartCoroutine(fenseGenerator.ConnectFieldCoroutine(buildngHash));
@@ -57,25 +56,20 @@ public class UIManager : MonoBehaviour
         isDeleteField = !isDeleteField;
     }
 
-    public void ChangeCropsCount(bool isExpension, int cropsCount)
+    public void ChangeCropsCount(int type, int cropsCount)
     {
-        if(isExpension)
+        switch(type)
         {
-            if (cropsCount > 97)
-                ExpendCropsCount.color = ImpossColor;
-            else
-                ExpendCropsCount.color = PossColor;
-            ExpendCropsCount.text = cropsCount.ToString();
+            case 0:
+                CreateCropsCount.text = cropsCount.ToString();
+                break;
+            case 1:
+                ExpendCurrentCount.text = cropsCount.ToString();
+                break;
+            case 2:
+                ExpendEntireCount.text = cropsCount.ToString();
+                break;
         }
-        else
-        {
-            if (cropsCount > 97)
-                CreateCropsCount.color = ImpossColor;
-            else
-                CreateCropsCount.color = PossColor;
-            CreateCropsCount.text = cropsCount.ToString();
-        }
-        preCropsCount = cropsCount;
     }
 
     public void SetActiveButtonWindows(int type, int hashCode)
@@ -84,15 +78,13 @@ public class UIManager : MonoBehaviour
         {
             case 0:
                 if (ExpendWindow.activeSelf)
-                {
-                    DisableCoroutine(true);
-                    InitializeWindows(1);
-                }
+                    return;
 
                 if (buildngHash != hashCode)
                 {
                     buildngHash = hashCode;
                     CreateWindow.SetActive(true);
+                    CreateCropsCount.text = "0";
                 }
                 else
                 {
@@ -102,15 +94,13 @@ public class UIManager : MonoBehaviour
                 break;
             case 1:
                 if (CreateWindow.activeSelf)
-                {
-                    DisableCoroutine(false);
-                    InitializeWindows(0);
-                }
+                    return;
 
                 if (buildngHash != hashCode)
                 {
                     buildngHash = hashCode;
                     ExpendWindow.SetActive(true);
+                    ExpendCurrentCount.text = "0";
                 }
                 else
                 {
