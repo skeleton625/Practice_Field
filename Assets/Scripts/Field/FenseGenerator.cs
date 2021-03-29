@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 using UnityEngine;
 using GPUInstancer;
 
@@ -16,12 +17,13 @@ public class FenseGenerator : MonoBehaviour
     [SerializeField] private float FenseLimit = 0f;
     [SerializeField] private LayerMask RayMask = default;
     [SerializeField] private Transform FensePole = null;
-    [SerializeField] private GPUInstancerPrefab FenseSide = null;
-    [SerializeField] private GPUInstancerPrefab FenseMain = null;
+    [SerializeField] private Transform FenseSide = null;
+    [SerializeField] private Transform FenseMid = null;
     [SerializeField] private ObjectCollider[] FenseCollider = null;
     [Header("Visual Settings")]
     [SerializeField] private Transform GeneratorVisual = null;
     [SerializeField] private Material VisualMaterial = null;
+    [SerializeField] private Material FenseMaterial = null;
     [SerializeField] private Color EnableColor = Color.black;
     [SerializeField] private Color DisableColor = Color.black;
     [SerializeField] private TerrainGenerator Generator = null;
@@ -45,7 +47,7 @@ public class FenseGenerator : MonoBehaviour
     private CropsEntity expendCrops = null;
     private List<Transform> poleTransform = null;
 
-    public int PoleCount { get => poleCount; }
+    public int PoleCount { get => poleCount; }  
 
     #region Unity Functions
     private void Awake()
@@ -156,7 +158,8 @@ public class FenseGenerator : MonoBehaviour
                         case 3:
                             GenerateCollider(expendCrops);
                             GenerateCrops(true);
-                            UIManager.Instance.ChangeCropsCount(true, createCrops.CropsCount);
+                            UIManager.Instance.ChangeCropsCount(1, expendCrops.CropsCount);
+                            UIManager.Instance.ChangeCropsCount(2, expendCrops.CropsCount + createCrops.CropsCount);
                             break;
                     }
                     ++poleCount;
@@ -210,17 +213,21 @@ public class FenseGenerator : MonoBehaviour
                             FenseCollider[0].transform.position = poleTransform[poleCount].position;
                             break;
                         case 1:
+                            GenerateFense(poleTransform[0].position, poleTransform[1].position, pole);
                             FenseCollider[0].transform.position = poleTransform[poleCount].position;
                             break;
                         case 2:
+                            GenerateFense(poleTransform[1].position, poleTransform[2].position, pole);
                             FenseCollider[1].transform.parent = null;
                             FenseCollider[1].transform.position = poleTransform[0].position;
                             FenseCollider[0].transform.position = poleTransform[poleCount].position;
                             break;
                         case 3:
+                            GenerateFense(poleTransform[2].position, poleTransform[3].position, pole);
+                            GenerateFense(poleTransform[3].position, poleTransform[0].position, pole);
                             GenerateCollider(createCrops);
                             GenerateCrops(false);
-                            UIManager.Instance.ChangeCropsCount(false, createCrops.CropsCount);
+                            UIManager.Instance.ChangeCropsCount(0, createCrops.CropsCount);
                             break;
                     }
                     ++poleCount;
@@ -251,15 +258,17 @@ public class FenseGenerator : MonoBehaviour
                 switch(timeI)
                 {
                     case 0:
-                        GenerateFense(poleTransform[0].position, poleTransform[1].position);
-                        GenerateFense(poleTransform[1].position, poleTransform[2].position);
-                        GenerateFense(poleTransform[2].position, poleTransform[3].position);
-                        if (!isExpension)
-                            GenerateFense(poleTransform[3].position, poleTransform[0].position);
-                        else
+                        if(isExpension)
                             MergeCrops();
                         for (int i = 0; i < 4; i++)
+                        {
                             Destroy(poleTransform[i].GetChild(0).gameObject);
+                            foreach (Transform child in poleTransform[i])
+                            {
+                                child.GetComponent<MeshRenderer>().material = FenseMaterial;
+                                child.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+                            }
+                        }
                         break;
                     case 1:
                         Generator.ApplyTerrainLayers(startPosition.x, startPosition.y, 1, ref cropsLayer);
@@ -391,28 +400,28 @@ public class FenseGenerator : MonoBehaviour
     #endregion
 
     #region Fense Functions
-    private void GenerateFense(Vector3 start, Vector3 end)
+    private void GenerateFense(Vector3 start, Vector3 end, Transform parent)
     {
-        var direction = (end - start).normalized / 4f;
+        var direction = (end - start).normalized;
         var startPosition = start + direction;
         var endPosition = end - direction;
         var fenseEnd = Instantiate(FenseSide, endPosition, Quaternion.identity);
-        fenseEnd.transform.SetParent(createCrops.transform);
-        fenseEnd.transform.LookAt(start);
+        fenseEnd.LookAt(start);
+        fenseEnd.Rotate(-90, 0, 0);
+        fenseEnd.SetParent(parent);
+
         var fenseStart = Instantiate(FenseSide, startPosition, Quaternion.identity);
-        fenseStart.transform.SetParent(createCrops.transform);
-        fenseStart.transform.LookAt(end);
+        fenseStart.LookAt(end);
+        fenseStart.Rotate(-90, 0, 0);
+        fenseStart.SetParent(parent);
 
-        var fenseScale = FenseMain.transform.localScale;
-        fenseScale.z = Vector3.Distance(endPosition, startPosition);
-        var fenseMid = Instantiate(FenseMain, Vector3.Lerp(startPosition, endPosition, .5f), Quaternion.identity);
-        fenseMid.transform.SetParent(createCrops.transform);
-        fenseMid.transform.localScale = fenseScale;
-        fenseMid.transform.LookAt(end);
-
-        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseStart);
-        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseEnd);
-        GPUInstancerAPI.AddPrefabInstance(prefabManager, fenseMid);
+        var fenseScale = FenseMid.localScale;
+        fenseScale.y *= Vector3.Distance(endPosition, startPosition) / 2;
+        var fenseMid = Instantiate(FenseMid, Vector3.Lerp(startPosition, endPosition, .5f), Quaternion.identity);
+        fenseMid.SetParent(parent);
+        fenseMid.LookAt(end);
+        fenseMid.Rotate(-90, 0, 0);
+        fenseMid.localScale = fenseScale;
     }
 
     private void GenerateCollider(CropsEntity entity)
@@ -515,9 +524,16 @@ public class FenseGenerator : MonoBehaviour
                 break;
             case 4:
                 if (isExpension)
+                {
                     expendCrops.GetComponent<MeshCollider>().sharedMesh = null;
+                    UIManager.Instance.ChangeCropsCount(1, 0);
+                    UIManager.Instance.ChangeCropsCount(2, createCrops.CropsCount);
+                }
                 else
+                {
                     createCrops.GetComponent<MeshCollider>().sharedMesh = null;
+                    UIManager.Instance.ChangeCropsCount(0, 0);
+                }
                 poleCount--;
                 Destroy(poleTransform[poleCount].gameObject);
                 break;
