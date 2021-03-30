@@ -5,43 +5,56 @@ using GPUInstancer;
 
 public class TerrainGenerator : MonoBehaviour
 {
+    [SerializeField] private float OffsetX = 0f;
+    [SerializeField] private float OffsetZ = 0f;
+    [SerializeField] private float RandomScale = 1f;
+    [SerializeField] private float HeightScale = 1f;
     [SerializeField] GPUInstancerDetailManager detailManager = null;
 
     private Terrain mainTerrain = null;
 
     private int width;
     private int height;
-    private int[,] detailArrays = null;
+    private int[,] terrainDetail = null;
+    private float[,] terrainHeights = null;
     private float[,,] terrainLayers = null;
 
     private void Awake()
     {
         mainTerrain = GetComponent<Terrain>();
         width = height = mainTerrain.terrainData.alphamapResolution;
-        terrainLayers = new float[width, height, mainTerrain.terrainData.alphamapLayers];
-        for (int z = 0; z < width; z++)
-        {
-            for (int x = 0; x < height; x++)
-                terrainLayers[z, x, 0] = 1;
-        }
 
-        detailArrays = new int[width, height];
+        terrainDetail = new int[width, height];
         for (int z = 512; z < 1536; z++)
         {
             for(int x = 512; x < 1536; x++)
             {
-                detailArrays[z, x] = 2;
+                terrainDetail[z, x] = 2;
+            }
+        }
+        GenerateTerrain();
+
+        ApplyTerrainLayers();
+        //ApplyTerrainDetail();
+    }
+
+    private void GenerateTerrain()
+    {
+        terrainHeights = new float[width, height];
+        terrainLayers = new float[width, height, mainTerrain.terrainData.alphamapLayers];
+        for (int z = 0; z < width; z++)
+        {
+            for (int x = 0; x < height; x++)
+            {
+                float zCoord = OffsetZ + z / 2048f * RandomScale;
+                float xCoord = OffsetX + x / 2048f * RandomScale;
+                terrainLayers[z, x, 0] = 1;
+                terrainHeights[z, x] = Mathf.PerlinNoise(xCoord, zCoord) * HeightScale;
             }
         }
 
-        ApplyTerrainLayers();
-        ApplyTerrainDetail();
-    }
-
-    public void SetTerrainLayer(int x, int z, int type)
-    {
-        terrainLayers[z, x, 0] = 0;
-        terrainLayers[z, x, type] = 1;
+        mainTerrain.terrainData.SetHeights(0, 0, terrainHeights);
+        mainTerrain.terrainData.SetAlphamaps(0, 0, terrainLayers);
     }
 
     public void ApplyTerrainLayers(int sx, int sz, int i, ref float[,] layers)
@@ -89,12 +102,12 @@ public class TerrainGenerator : MonoBehaviour
             for (int x = 0; x < details.GetLength(1); x++)
             {
                 if (details[z, x])
-                    detailArrays[z + sz, x + sx] = 0;
+                    terrainDetail[z + sz, x + sx] = 0;
             }
         }
 
         List<int[,]> detailMap = new List<int[,]>();
-        detailMap.Add(detailArrays);
+        detailMap.Add(terrainDetail);
         detailManager.SetDetailMapData(detailMap);
         GPUInstancerAPI.UpdateDetailInstances(detailManager, true);
     }
@@ -102,7 +115,7 @@ public class TerrainGenerator : MonoBehaviour
     public void ApplyTerrainDetail()
     {
         List<int[,]> detailMap = new List<int[,]>();
-        detailMap.Add(detailArrays);
+        detailMap.Add(terrainDetail);
         detailManager.SetDetailMapData(detailMap);
         GPUInstancerAPI.InitializeGPUInstancer(detailManager);
     }
