@@ -80,29 +80,25 @@ public class UIManager : MonoBehaviour
                 if (ExpendWindow.activeSelf)
                     return;
 
-                if (buildngHash != hashCode)
-                {
-                    buildngHash = hashCode;
-                    CreateWindow.SetActive(true);
-                    CreateCropsCount.text = "0";
-                }
-                else
-                {
-                    DisableCoroutine(false);
-                    InitializeWindows(0);
-                }
+                buildngHash = hashCode;
+                CreateWindow.SetActive(true);
+                CreateCropsCount.text = "0";
                 break;
             case 1:
                 if (CreateWindow.activeSelf)
                     return;
 
-                if (buildngHash != hashCode)
+                buildngHash = hashCode;
+                ExpendWindow.SetActive(true);
+                ExpendCurrentCount.text = "0";
+                break;
+            case 2:
+                if (CreateWindow.activeSelf)
                 {
-                    buildngHash = hashCode;
-                    ExpendWindow.SetActive(true);
-                    ExpendCurrentCount.text = "0";
+                    DisableCoroutine(false);
+                    InitializeWindows(0);
                 }
-                else
+                else if (ExpendWindow.activeSelf)
                 {
                     DisableCoroutine(true);
                     InitializeWindows(1);
