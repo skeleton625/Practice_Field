@@ -4,17 +4,16 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
-    [SerializeField] private FenseGenerator fenseGenerator = null;
+    [SerializeField] private FieldGenerator fieldGenerator = null;
     [SerializeField] private GameObject CreateWindow = null;
     [SerializeField] private GameObject ExpendWindow = null;
     [SerializeField] private Text CreateCropsCount = null;
     [SerializeField] private Text ExpendEntireCount = null;
     [SerializeField] private Text ExpendCurrentCount = null;
 
-    private int buildngHash = 0;
-    private int preCropsCount = 0;
-    private bool isCreateField = false;
-    private bool isExpendField = false;
+    private int buildingHash = 0;
+    private bool isMakingField = false;
+    private bool isExpandField = false;
     private bool isDeleteField = false;
     private Coroutine fieldCoroutine = null;
 
@@ -28,27 +27,22 @@ public class UIManager : MonoBehaviour
 
     public void OnClickCreateField()
     {
-        if (!isCreateField)
+        if (!isMakingField)
         {
-            fenseGenerator.gameObject.SetActive(true);
-            fieldCoroutine = StartCoroutine(fenseGenerator.UnConnectFieldCoroutine());
-            isCreateField = true;
+            fieldGenerator.gameObject.SetActive(true);
+            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine());
+            isMakingField = true;
         }
     }
 
-    public void OnClickExpendField()
+    public void OnClickExpandField()
     {
-        if(!isExpendField)
-        {
-            fenseGenerator.gameObject.SetActive(true);
-            fieldCoroutine = StartCoroutine(fenseGenerator.ConnectFieldCoroutine(buildngHash));
-            isExpendField = true;
-        }
     }
 
     public void OnClickStartBuild(bool isExpension)
     {
-        StartCoroutine(StartBuildCoroutine(isExpension));
+        InitializeWindows(0);
+        StartCoroutine(fieldGenerator.StartBuildCoroutine());
     }
 
     public void OnClickDeleteField()
@@ -80,7 +74,7 @@ public class UIManager : MonoBehaviour
                 if (ExpendWindow.activeSelf)
                     return;
 
-                buildngHash = hashCode;
+                buildingHash = hashCode;
                 CreateWindow.SetActive(true);
                 CreateCropsCount.text = "0";
                 break;
@@ -88,19 +82,20 @@ public class UIManager : MonoBehaviour
                 if (CreateWindow.activeSelf)
                     return;
 
-                buildngHash = hashCode;
+                buildingHash = hashCode;
                 ExpendWindow.SetActive(true);
                 ExpendCurrentCount.text = "0";
                 break;
             case 2:
                 if (CreateWindow.activeSelf)
                 {
-                    DisableCoroutine(false);
+                    InitializeCoroutine();
                     InitializeWindows(0);
                 }
+
                 else if (ExpendWindow.activeSelf)
                 {
-                    DisableCoroutine(true);
+                    InitializeCoroutine();
                     InitializeWindows(1);
                 }
                 break;
@@ -109,53 +104,26 @@ public class UIManager : MonoBehaviour
 
     private void InitializeWindows(int type)
     {
+        
         switch (type)
         {
             case 0:
-                isCreateField = false;
+                isMakingField = false;
                 CreateWindow.SetActive(false);
                 break;
             case 1:
-                isExpendField = false;
+                isExpandField = false;
                 ExpendWindow.SetActive(false);
                 break;
         }
 
         isDeleteField = false;
-        buildngHash = 0;
+        buildingHash = 0;
     }
 
-    private void DisableCoroutine(bool isExpension)
+    private void InitializeCoroutine()
     {
-        if (fieldCoroutine != null)
-        {
-            StopCoroutine(fieldCoroutine);
-            fieldCoroutine = null;
-            fenseGenerator.DestroyFense(isExpension);
-            fenseGenerator.ClearFense();
-            fenseGenerator.gameObject.SetActive(false);
-            fenseGenerator.transform.position = Vector3.zero;
-        }
-    }
-
-    private IEnumerator StartBuildCoroutine(bool isExpension)
-    {
-        if (fenseGenerator.PoleCount <= 3)
-            yield break;
-
-        if (isCreateField)
-            InitializeWindows(0);
-        else if (isExpendField)
-            InitializeWindows(1);
-
-        if (fieldCoroutine != null)
-        {
-            StopCoroutine(fieldCoroutine);
-            fieldCoroutine = null;
-            fenseGenerator.gameObject.SetActive(false);
-            fenseGenerator.transform.position = Vector3.zero;
-        }
-        yield return StartCoroutine(fenseGenerator.GenerateField(isExpension));
-        fenseGenerator.gameObject.SetActive(false);
+        StopCoroutine(fieldCoroutine);
+        fieldCoroutine = null;
     }
 }
