@@ -25,18 +25,6 @@ public class PlayerController : MonoBehaviour
                 {
                     uiManager.SetActiveButtonWindows(0, hit.transform.GetHashCode());
                 }
-                if (hit.transform.CompareTag("Crops"))
-                {
-                    if(uiManager.IsDeleteField)
-                    {
-                        Destroy(hit.transform.gameObject);
-                    }
-                    else
-                    {
-                        uiManager.ChangeCropsCount(2, hit.transform.GetComponent<CropsEntity>().CropsCount);
-                        uiManager.SetActiveButtonWindows(1, hit.transform.GetHashCode());
-                    }
-                }
             }    
         }
 

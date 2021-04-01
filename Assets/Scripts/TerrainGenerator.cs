@@ -90,11 +90,6 @@ public class TerrainGenerator : MonoBehaviour
         mainTerrain.terrainData.SetAlphamaps(0, 0, terrainLayers);
     }
 
-    public void RemoveTerrainDetail(MeshCollider meshCollider, Vector3 center, Vector3 size, float offset)
-    {
-        detailManager.RemoveInstancesInsideMeshCollider(meshCollider, center, size / 2, offset);
-    }
-
     public void RemoveTerrainDetail(int sx, int sz, ref bool[,] details)
     {
         for(int z = 0; z < details.GetLength(0); z++)
