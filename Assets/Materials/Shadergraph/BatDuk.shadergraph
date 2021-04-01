@@ -3251,7 +3251,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Texture2DMaterialSlot",
     "m_ObjectId": "da4753af7b71470ea4122a3d01252c87",
     "m_Id": 0,
-    "m_DisplayName": "Snow_Diffuse",
+    "m_DisplayName": "UpBatDuk_Diffuse",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
