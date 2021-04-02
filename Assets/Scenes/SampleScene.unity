@@ -559,7 +559,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adddf321eb1fbcf4d8340adcd407871a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prototypeList: []
+  prototypeList:
+  - {fileID: -7839001759714483451, guid: 543a8f20f32342e439a1f4f2ae344a80, type: 2}
   autoSelectCamera: 1
   cameraData:
     mainCamera: {fileID: 738646680695097199}
@@ -618,7 +619,7 @@ MonoBehaviour:
   lightProbeDisabled: 0
   _terrain: {fileID: 1593621812}
   additionalTerrains: []
-  terrainSettings: {fileID: 0}
+  terrainSettings: {fileID: 11400000, guid: 543a8f20f32342e439a1f4f2ae344a80, type: 2}
   detailLayer: 0
   runInThreads: 1
   threadHeightResolution: 0
@@ -3819,13 +3820,17 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 0.2
       objectReference: {fileID: 0}
+    - target: {fileID: 559931543688503544, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 559931543688503545, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: m_Layer
-      value: 9
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 559931543688503545, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: m_TagString
-      value: Crops
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 559931544441180268, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: m_Name
@@ -3880,6 +3885,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7396335493529634518, guid: d9938fbe5df143243a6c34eb038ce21b, type: 3}
     - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: BatDukMid
+      value: 
+      objectReference: {fileID: 7396335493529634518, guid: d9938fbe5df143243a6c34eb038ce21b, type: 3}
+    - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: FensePole
       value: 
       objectReference: {fileID: 5820867284834789312, guid: d5828be25546b3b44907f080463b1548, type: 3}
@@ -3896,9 +3905,17 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: BatDukPole
+      value: 
+      objectReference: {fileID: 8353053995427879901, guid: f077c05e5152e3a4393672ef63b75349, type: 3}
+    - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: BatDukSide
+      value: 
+      objectReference: {fileID: 5820867284834789312, guid: d5828be25546b3b44907f080463b1548, type: 3}
+    - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: FieldDecal
       value: 
-      objectReference: {fileID: 4611454636719429279, guid: 61b83cb0bce001247aa3421929bb9872, type: 3}
+      objectReference: {fileID: 4433280747331941944, guid: 61b83cb0bce001247aa3421929bb9872, type: 3}
     - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: LimitScale
       value: 22
@@ -3907,6 +3924,10 @@ PrefabInstance:
       propertyPath: TestParent
       value: 
       objectReference: {fileID: 735961126}
+    - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: FieldEntity
+      value: 
+      objectReference: {fileID: 5637746749462870825, guid: 61b83cb0bce001247aa3421929bb9872, type: 3}
     - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: FieldSample
       value: 
@@ -3934,6 +3955,14 @@ PrefabInstance:
     - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: RayMask.m_Bits
       value: 4096
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301169456646616081, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: m_Size.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301169456646616081, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: m_Size.z
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
