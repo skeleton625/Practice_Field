@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 559931543087860913}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: FieldBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -61,7 +61,7 @@ Transform:
   m_GameObject: {fileID: 559931543688503545}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 2, z: 1}
   m_Children: []
   m_Father: {fileID: 559931543087860913}
   m_RootOrder: 0
@@ -168,7 +168,9 @@ GameObject:
   m_Component:
   - component: {fileID: 559931544441180270}
   - component: {fileID: 559931544441180271}
-  m_Layer: 0
+  - component: {fileID: 4223534346095357604}
+  - component: {fileID: 3301169456646616081}
+  m_Layer: 11
   m_Name: FieldGenerator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -212,10 +214,40 @@ MonoBehaviour:
   FieldVisual: {fileID: 0}
   RotateSpace: {fileID: 0}
   FieldDecal: {fileID: 0}
-  Fense: {fileID: 0}
-  FensePole: {fileID: 0}
+  BatDukMid: {fileID: 0}
+  BatDukSide: {fileID: 0}
+  BatDukPole: {fileID: 0}
   FieldCollider: {fileID: 4850167938680660194}
   VisualMaterial: {fileID: 2100000, guid: d697a3b418eec4e4cb27a1628fa8eee4, type: 2}
   PossibleColor: {r: 0, g: 0.73333335, b: 1, a: 0.39215687}
   ImpossibleColor: {r: 1, g: 0.07438043, b: 0, a: 0.39215687}
   FieldData: {fileID: 0}
+--- !u!54 &4223534346095357604
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559931544441180268}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 112
+  m_CollisionDetection: 0
+--- !u!65 &3301169456646616081
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559931544441180268}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 2, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
