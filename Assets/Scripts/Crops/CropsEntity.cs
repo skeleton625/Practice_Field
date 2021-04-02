@@ -31,7 +31,7 @@ public class CropsEntity : MonoBehaviour
             if (cropsList == null)
                 return 0;
             else
-                return cropsList.Count;
+                return cropsList.Count / 4;
         }
     }
 
@@ -122,8 +122,6 @@ public class CropsEntity : MonoBehaviour
     public void AddCrops(List<Transform> cropsList)
     {
         this.cropsList.AddRange(cropsList);
-        while(CropsCount > 100)
-            cropsList.RemoveAt(CropsCount - 1);
     }
 
     public void AddCrops(CropsEntity entity)
