@@ -30,13 +30,19 @@ public class UIManager : MonoBehaviour
         if (!isMakingField)
         {
             fieldGenerator.gameObject.SetActive(true);
-            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine());
+            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine(false));
             isMakingField = true;
         }
     }
 
     public void OnClickExpandField()
     {
+        if (!isExpandField)
+        {
+            fieldGenerator.gameObject.SetActive(true);
+            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine(true));
+            isExpandField = true;
+        }
     }
 
     public void OnClickStartBuild(bool isExpension)
