@@ -412,9 +412,9 @@ public class FenseGenerator : MonoBehaviour
         startPosition.x = sx - 1;
         startPosition.y = sz - 1;
         if (isExpension)
-            expendCrops.AddCrops(cropsFieldList);
+            expendCrops.AddCrops(cropsFieldList, null);
         else
-            createCrops.AddCrops(cropsFieldList);
+            createCrops.AddCrops(cropsFieldList, null);
     }
     #endregion
 
