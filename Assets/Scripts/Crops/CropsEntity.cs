@@ -22,22 +22,28 @@ public class CropsEntity : MonoBehaviour
 
     private TestAI workingAI = null;
     private CropsData cropsData = null;
-    private List<Transform> cropsList = null;
+    private CropsEntity parentEntity = null;
+    private List<Vector3> polePositions = null;
+    private List<Transform> cropsTransform = null;
+    private List<CropsEntity> expandEntities = null;
     #endregion
 
     public int CropsCount { 
         get
         {
-            if (cropsList == null)
+            if (cropsTransform == null)
                 return 0;
             else
-                return cropsList.Count / 4;
+                return cropsTransform.Count / 4;
         }
     }
 
+    public CropsEntity ParentEntity { get => parentEntity; }
+
     private void Awake()
     {
-        cropsList = new List<Transform>();
+        cropsTransform = new List<Transform>();
+        polePositions = new List<Vector3>();
     }
 
     private void Update()
@@ -89,7 +95,7 @@ public class CropsEntity : MonoBehaviour
                     break;
                 case FarmType.Type5:
                     SetActiveCrops(false);
-                    var scale = cropsList[0].localScale;
+                    var scale = cropsTransform[0].localScale;
                     scale.y = 0;
                     SetCropsScale(scale);
                     harvestedCount = 0;
@@ -119,34 +125,42 @@ public class CropsEntity : MonoBehaviour
         StartCoroutine(StartWorkCoroutine());
     }
 
-    public void AddCrops(List<Transform> cropsList)
+    public void AddCrops(List<Transform> cropsTransform, List<Vector3> polePositions)
     {
-        this.cropsList.AddRange(cropsList);
+        this.cropsTransform.AddRange(cropsTransform);
+        this.polePositions.AddRange(polePositions);
     }
 
-    public void AddCrops(CropsEntity entity)
+    public void AddCrops(CropsEntity otherEntity)
     {
-        cropsList.AddRange(entity.cropsList);
+        cropsTransform.AddRange(otherEntity.cropsTransform);
     }
+
+    public void ExpandCropsEntity(CropsEntity otherEntity)
+    {
+        expandEntities.Add(otherEntity);
+        otherEntity.parentEntity = this;
+    }
+
     #endregion
 
     #region Private Functions
     private void SetCropsScale(Vector3 scale)
     {
-        foreach (var cropsTrans in cropsList)
+        foreach (var cropsTrans in cropsTransform)
             cropsTrans.localScale = scale;
     }
 
     private void SetActiveCrops(bool isActive)
     {
-        foreach (var cropsTrans in cropsList)
+        foreach (var cropsTrans in cropsTransform)
             cropsTrans.gameObject.SetActive(isActive);
     }
 
     private void GoWorkPosition()
     {
-        workingAI.SetDestination(cropsList[nextCropsIndex].position);
-        nextCropsIndex = (nextCropsIndex + 1) % cropsList.Count;
+        workingAI.SetDestination(cropsTransform[nextCropsIndex].position);
+        nextCropsIndex = (nextCropsIndex + 1) % cropsTransform.Count;
     }
 
     private bool HarvestCrops()
@@ -154,8 +168,8 @@ public class CropsEntity : MonoBehaviour
         var preHarvestCount = harvestedCount + workingAI.WorkScale;
         for (int i = harvestedCount; i < preHarvestCount; i++)
         {
-            if (i < cropsList.Count)
-                cropsList[i].gameObject.SetActive(false);
+            if (i < cropsTransform.Count)
+                cropsTransform[i].gameObject.SetActive(false);
             else
             {
                 harvestedCount += i;
@@ -170,7 +184,7 @@ public class CropsEntity : MonoBehaviour
     #region Coroutine Functions
     private IEnumerator GrowCrops()
     {
-        var prevScale = cropsList[0].localScale;
+        var prevScale = cropsTransform[0].localScale;
         var nextScale = prevScale + Vector3.up * cropsScale;
         var rate = Time.deltaTime * CropSpeed;
         for (float i = 0; i < 1; i += rate)

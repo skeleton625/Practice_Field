@@ -26,13 +26,15 @@ public class FieldGenerator : MonoBehaviour
     [SerializeField] private Color ImpossibleColor = Color.white;
     [Header("Field Crops Setting")]
     [SerializeField] private CropsData FieldData = null;
+    [SerializeField] private Mesh BoxMesh = null;
 
     private bool isFixed = false;
+    private bool isExpand = false;
     private bool isRotate = false;
     private bool isEnable = false;
     private bool isConnected = false;
     private Camera mainCamera = null;
-    private CropsEntity connectedEntity = null;
+    private CropsEntity connectEntity = null;
     private Quaternion fieldSpace = Quaternion.identity;
     private Quaternion reverseFieldSpace = Quaternion.identity;
 
@@ -44,22 +46,12 @@ public class FieldGenerator : MonoBehaviour
 
     private void OnEnable()
     {
-        isFixed = false;
-        isRotate = false;
-        fieldSpace = Quaternion.identity;
-        reverseFieldSpace = Quaternion.identity;
-
-        transform.parent = null;
-        transform.position = Vector3.zero;
-        FieldVisual.parent = FieldBody;
-        FieldBody.localScale = InitScale;
-        FieldBody.localPosition = Vector3.zero;
-        FieldVisual.localPosition = Vector3.up;
+        Initialize();
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.R) && !isFixed)
         {
             isRotate = !isRotate;
             if (isRotate)
@@ -75,6 +67,12 @@ public class FieldGenerator : MonoBehaviour
                 reverseFieldSpace = Quaternion.identity;
             }            
         }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Initialize();
+            UIManager.Instance.SetActiveButtonWindows(2, 0);
+        }
     }
 
     private void OnTriggerStay(Collider other)
@@ -84,7 +82,7 @@ public class FieldGenerator : MonoBehaviour
             isConnected = true;
             FieldVisual.parent = null;
             FieldVisual.position = other.transform.position + Vector3.up;
-            connectedEntity = other.transform.parent.GetComponent<CropsEntity>();
+            connectEntity = other.transform.parent.GetComponent<CropsEntity>();
         }
     }
 
@@ -95,22 +93,34 @@ public class FieldGenerator : MonoBehaviour
             isConnected = false;
             FieldVisual.parent = FieldBody;
             FieldVisual.localPosition = Vector3.up;
-            connectedEntity = null;
+            connectEntity = null;
         }
     }
     #endregion
 
     #region Field Generate Functions
-    public IEnumerator MakeBuildingCoroutine()
+    public IEnumerator MakeBuildingCoroutine(bool isExpand)
     {
+        this.isExpand = isExpand;
         Vector3 startPosition = Vector3.zero;
         while(true)
         {
             CheckPossiblePosition();
             if (Input.GetMouseButtonDown(0))
             {
-                isFixed = true;
-                break;
+                if(isExpand)
+                {
+                    if(isConnected)
+                    {
+                        isFixed = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    isFixed = true;
+                    break;
+                }
             }
 
             startPosition = fieldSpace * RaycastMouseRay();
@@ -161,17 +171,17 @@ public class FieldGenerator : MonoBehaviour
             fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
             fieldEntity.transform.parent = fieldEntity.transform;
 
-            GenerateBatDuk(fieldEntity.transform);
+            var polePositions = GenerateBatDuk(fieldEntity.transform);
             var cropsTransform = GenerateFieldCrops(fieldEntity.transform);
-            if (isConnected)
+            fieldEntity.AddCrops(cropsTransform, polePositions);
+            fieldEntity.Initialize(FieldData);
+            if (isExpand)
             {
-                connectedEntity.AddCrops(cropsTransform);
-                Debug.Log("Expand Count : " + connectedEntity.CropsCount);
+                connectEntity.ExpandCropsEntity(fieldEntity);
+                Debug.Log("Expand Count : " + connectEntity.CropsCount);
             }
             else
             {
-                fieldEntity.AddCrops(cropsTransform);
-                fieldEntity.Initialize(FieldData);
                 Debug.Log("Create Count : " + fieldEntity.CropsCount);
             }
         }
@@ -180,22 +190,22 @@ public class FieldGenerator : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void GenerateBatDuk(Transform parent)
+    private List<Vector3> GenerateBatDuk(Transform parent)
     {
         int zScale = (int)FieldBody.localScale.z / 2;
         int xScale = (int)FieldBody.localScale.x / 2;
-        var polePosition = new List<Vector3>();
-        polePosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, -zScale) + FieldVisual.position);
-        polePosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, zScale) + FieldVisual.position);
-        polePosition.Add(reverseFieldSpace * new Vector3(xScale, 100, zScale) + FieldVisual.position);
-        polePosition.Add(reverseFieldSpace * new Vector3(xScale, 100, -zScale) + FieldVisual.position);
+        var vertexPosition = new List<Vector3>();
+        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, -zScale) + FieldVisual.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, zScale) + FieldVisual.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, zScale) + FieldVisual.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, -zScale) + FieldVisual.position);
 
         for(int i = 0; i < 4; i++)
         {
             var j = (i + 1) % 4;
 
-            var prevSidePosition = RaycastFromUp(polePosition[i]);
-            var nextSidePosition = RaycastFromUp(polePosition[j]);
+            var prevSidePosition = RaycastFromUp(vertexPosition[i]);
+            var nextSidePosition = RaycastFromUp(vertexPosition[j]);
             var direction = (nextSidePosition - prevSidePosition).normalized;
             var batDukStart = Instantiate(BatDukSide, prevSidePosition + direction, Quaternion.identity);
             var batDukEnd = Instantiate(BatDukSide, nextSidePosition - direction, Quaternion.identity);
@@ -220,16 +230,18 @@ public class FieldGenerator : MonoBehaviour
         if((xScale % 2).Equals(0)) { sx = 3; ex = xScale * 2 - 1; }
         if ((zScale % 2).Equals(0)) { sz = 3; ez = zScale * 2 - 1; }
 
+        var polePosition = new List<Vector3>();
         for (int k = sx; k <= ex; k += 4)
         {
-            GeneratePoleCollider(parent, polePosition[0] + reverseFieldSpace * new Vector3(k - 1, 0, -1));
-            GeneratePoleCollider(parent, polePosition[1] + reverseFieldSpace * new Vector3(k - 1, 0, 1));
+            polePosition.Add(vertexPosition[0] + reverseFieldSpace * new Vector3(k - 1, 0, -1));
+            polePosition.Add(vertexPosition[1] + reverseFieldSpace * new Vector3(k - 1, 0, 1));
         }
         for(int k = sz; k <= ez; k += 4)
         {
-            GeneratePoleCollider(parent, polePosition[0] + reverseFieldSpace * new Vector3(-1, 0, k - 1));
-            GeneratePoleCollider(parent, polePosition[3] + reverseFieldSpace * new Vector3(1, 0, k - 1));
+            polePosition.Add(vertexPosition[0] + reverseFieldSpace * new Vector3(-1, 0, k - 1));
+            polePosition.Add(vertexPosition[3] + reverseFieldSpace * new Vector3(1, 0, k - 1));
         }
+        return polePosition;
     }
 
     private void GeneratePoleCollider(Transform parent, Vector3 position)
@@ -255,6 +267,21 @@ public class FieldGenerator : MonoBehaviour
             }
         }
         return FieldCropsList;
+    }
+
+    public void Initialize()
+    {
+        isFixed = false;
+        isRotate = false;
+        fieldSpace = Quaternion.identity;
+        reverseFieldSpace = Quaternion.identity;
+
+        transform.parent = null;
+        transform.position = Vector3.zero;
+        FieldVisual.parent = FieldBody;
+        FieldBody.localScale = InitScale;
+        FieldBody.localPosition = Vector3.zero;
+        FieldVisual.localPosition = Vector3.up;
     }
     #endregion
 
