@@ -25,6 +25,7 @@ public class FieldGenerator : MonoBehaviour
     [SerializeField] private Color ImpossibleColor = Color.white;
     [Header("Field Crops Setting")]
     [SerializeField] private CropsData FieldData = null;
+    [SerializeField] private Material RotateMaterial = null;
 
     private bool isFixed = false;
     private bool isExpand = false;
@@ -97,14 +98,15 @@ public class FieldGenerator : MonoBehaviour
                 if (isRotate)
                 {
                     transform.SetParent(RotateSpace);
-                    fieldSpace = Quaternion.Euler(0, -45, 0);
                     reverseFieldSpace = Quaternion.Euler(0, 45, 0);
+                    fieldSpace.y = -reverseFieldSpace.y;
+                    fieldSpace.w = reverseFieldSpace.w;
                 }
                 else
                 {
                     transform.SetParent(null);
-                    fieldSpace = Quaternion.identity;
                     reverseFieldSpace = Quaternion.identity;
+                    fieldSpace.y = reverseFieldSpace.y;
                 }
             }
 
@@ -187,6 +189,8 @@ public class FieldGenerator : MonoBehaviour
         fieldEntity.GetComponent<DecalProjector>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
         fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
         fieldEntity.transform.parent = fieldEntity.transform;
+        if (isRotate)
+            fieldEntity.GetComponent<DecalProjector>().material = RotateMaterial;
 
         var polePositions = GenerateBatDuk(fieldEntity.transform);
         var cropsTransform = GenerateFieldCrops(fieldEntity.transform);
@@ -274,7 +278,7 @@ public class FieldGenerator : MonoBehaviour
             for(int x = -xScale + 1; x < xScale - 1; x += 2)
             {
                 var position = RaycastFromUp(reverseFieldSpace * new Vector3(x, 0, z) + startPosition);
-                var crops = Instantiate(FieldData.Visual, position, Quaternion.Euler(0, Random.Range(0, 360), 0));
+                var crops = Instantiate(FieldData.Visual, position, reverseFieldSpace);
                 tmpCropsList.Add(crops);
                 crops.parent = parent;
             }
