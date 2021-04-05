@@ -20,18 +20,15 @@ public class FieldGenerator : MonoBehaviour
     [SerializeField] private Transform BatDukPole = null;
     [SerializeField] private Transform RotateSpace = null;
     [Header("Field UI Setting")]
-    [SerializeField] private ObjectCollider FieldCollider = null;
     [SerializeField] private Material VisualMaterial = null;
     [SerializeField] private Color PossibleColor = Color.white;
     [SerializeField] private Color ImpossibleColor = Color.white;
     [Header("Field Crops Setting")]
     [SerializeField] private CropsData FieldData = null;
-    [SerializeField] private Mesh BoxMesh = null;
 
     private bool isFixed = false;
     private bool isExpand = false;
     private bool isRotate = false;
-    private bool isEnable = false;
     private bool isConnected = false;
     private Camera mainCamera = null;
     private CropsEntity connectEntity = null;
@@ -51,23 +48,6 @@ public class FieldGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R) && !isFixed)
-        {
-            isRotate = !isRotate;
-            if (isRotate)
-            {
-                transform.SetParent(RotateSpace);
-                fieldSpace = Quaternion.Euler(0, -45, 0);
-                reverseFieldSpace = Quaternion.Euler(0, 45, 0);
-            }
-            else
-            {
-                transform.SetParent(null);
-                fieldSpace = Quaternion.identity;
-                reverseFieldSpace = Quaternion.identity;
-            }            
-        }
-
         if (Input.GetKeyDown(KeyCode.E))
         {
             Initialize();
@@ -102,15 +82,45 @@ public class FieldGenerator : MonoBehaviour
     public IEnumerator MakeBuildingCoroutine(bool isExpand)
     {
         this.isExpand = isExpand;
-        Vector3 startPosition = Vector3.zero;
+        var isEnable = false;
+        var preEnable = false;
+        var startPosition = Vector3.zero;
+        var fieldSpace = Quaternion.identity;
+        var fieldCollider = FieldVisual.GetComponent<ObjectCollider>();
         while(true)
         {
-            CheckPossiblePosition();
+            preEnable = fieldCollider.IsUnCollid;
+            CheckPossiblePosition(ref isEnable, preEnable);
+            if (Input.GetKeyDown(KeyCode.R) && !isFixed)
+            {
+                isRotate = !isRotate;
+                if (isRotate)
+                {
+                    transform.SetParent(RotateSpace);
+                    fieldSpace = Quaternion.Euler(0, -45, 0);
+                    reverseFieldSpace = Quaternion.Euler(0, 45, 0);
+                }
+                else
+                {
+                    transform.SetParent(null);
+                    fieldSpace = Quaternion.identity;
+                    reverseFieldSpace = Quaternion.identity;
+                }
+            }
+
             if (Input.GetMouseButtonDown(0))
             {
-                if(isExpand)
+                if (isEnable)
                 {
-                    if(isConnected)
+                    if (isExpand)
+                    {
+                        if (isConnected)
+                        {
+                            isFixed = true;
+                            break;
+                        }
+                    }
+                    else
                     {
                         isFixed = true;
                         break;
@@ -118,8 +128,8 @@ public class FieldGenerator : MonoBehaviour
                 }
                 else
                 {
-                    isFixed = true;
-                    break;
+                    Initialize();
+                    UIManager.Instance.SetActiveButtonWindows(2, 0);
                 }
             }
 
@@ -141,20 +151,29 @@ public class FieldGenerator : MonoBehaviour
         Vector3 localRotation = Vector3.zero;
         while (true)
         {
-            CheckPossiblePosition();
-            if (Input.GetMouseButtonUp(0))
-                break;
-
             nextPosition = fieldSpace * RaycastMouseRay();
             fieldPartScale.x = nextPosition.x - startPosition.x;
             fieldPartScale.z = nextPosition.z - startPosition.z;
 
             localRotation.x = fieldPartScale.z < 0 ? 180 : 0;
             localRotation.z = fieldPartScale.x < 0 ? 180 : 0;
-            var PartScaleX = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.x / PartScale * PartScale) + PartScale, 4, LimitScale);
-            var PartScaleZ = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.z / PartScale * PartScale) + PartScale, 4, LimitScale);
+            var PartScaleX = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
+            var PartScaleZ = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
             fieldPartScale.x = PartScaleX;
             fieldPartScale.z = PartScaleZ;
+
+            preEnable = fieldCollider.IsUnCollid && PartScaleX > 2 && PartScaleZ > 2;
+            CheckPossiblePosition(ref isEnable, preEnable);
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (isEnable)
+                    break;
+                else
+                {
+                    Initialize();
+                    UIManager.Instance.SetActiveButtonWindows(2, 0);
+                }
+            }
 
             transform.localRotation = Quaternion.Euler(localRotation);
             FieldBody.localScale = fieldPartScale;
@@ -164,26 +183,23 @@ public class FieldGenerator : MonoBehaviour
 
     public IEnumerator StartBuildCoroutine()
     {
-        if(isEnable)
-        {
-            var fieldEntity = Instantiate(FieldEntity, FieldVisual.position, Quaternion.Euler(90, reverseFieldSpace.eulerAngles.y, 0));
-            fieldEntity.GetComponent<DecalProjector>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
-            fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
-            fieldEntity.transform.parent = fieldEntity.transform;
+        var fieldEntity = Instantiate(FieldEntity, FieldVisual.position, Quaternion.Euler(90, reverseFieldSpace.eulerAngles.y, 0));
+        fieldEntity.GetComponent<DecalProjector>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
+        fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
+        fieldEntity.transform.parent = fieldEntity.transform;
 
-            var polePositions = GenerateBatDuk(fieldEntity.transform);
-            var cropsTransform = GenerateFieldCrops(fieldEntity.transform);
-            fieldEntity.AddCrops(cropsTransform, polePositions);
-            fieldEntity.Initialize(FieldData);
-            if (isExpand)
-            {
-                connectEntity.ExpandCropsEntity(fieldEntity);
-                Debug.Log("Expand Count : " + connectEntity.CropsCount);
-            }
-            else
-            {
-                Debug.Log("Create Count : " + fieldEntity.CropsCount);
-            }
+        var polePositions = GenerateBatDuk(fieldEntity.transform);
+        var cropsTransform = GenerateFieldCrops(fieldEntity.transform);
+        fieldEntity.AddCrops(cropsTransform, polePositions);
+        fieldEntity.Initialize(FieldData);
+        if (isExpand)
+        {
+            connectEntity.ExpandCropsEntity(fieldEntity);
+            Debug.Log("Expand Count : " + connectEntity.CropsCount);
+        }
+        else
+        {
+            Debug.Log("Create Count : " + fieldEntity.CropsCount);
         }
 
         yield return null;
@@ -244,29 +260,32 @@ public class FieldGenerator : MonoBehaviour
         return polePosition;
     }
 
-    private void GeneratePoleCollider(Transform parent, Vector3 position)
-    {
-        var batDukPole = Instantiate(BatDukPole, RaycastFromUp(position), fieldSpace);
-        batDukPole.parent = parent;
-    }
-
     private List<Transform> GenerateFieldCrops(Transform parent)
     {
-        int zScale = (int)FieldBody.localScale.z / 2;
-        int xScale = (int)FieldBody.localScale.x / 2;
-        var startPosition = FieldVisual.position + (isRotate ? reverseFieldSpace * new Vector3(.5f, 0, .5f) : new Vector3(.5f, 0, .5f));
-        var FieldCropsList = new List<Transform>();
-        for(int z = -zScale + 1; z < zScale - 1; z ++)
+        var oddCheck = 0;
+        var zScale = (int)FieldBody.localScale.z / 2;
+        var xScale = (int)FieldBody.localScale.x / 2;
+        var startPosition = FieldVisual.position + (isRotate ? reverseFieldSpace * new Vector3(1, 0, 1) : new Vector3(1, 0, 1));
+
+        var tmpCropsList = new List<Transform>();
+        var fieldCropsList = new List<Transform>();
+        for (int z = -zScale + 1; z < zScale - 1; z += 2)
         {
-            for(int x = -xScale + 1; x < xScale - 1; x ++)
+            for(int x = -xScale + 1; x < xScale - 1; x += 2)
             {
                 var position = RaycastFromUp(reverseFieldSpace * new Vector3(x, 0, z) + startPosition);
                 var crops = Instantiate(FieldData.Visual, position, Quaternion.Euler(0, Random.Range(0, 360), 0));
-                FieldCropsList.Add(crops);
+                tmpCropsList.Add(crops);
                 crops.parent = parent;
             }
+
+            if ((oddCheck % 2).Equals(1))
+                tmpCropsList.Reverse();
+            fieldCropsList.AddRange(tmpCropsList);
+            tmpCropsList.Clear();
+            ++oddCheck;
         }
-        return FieldCropsList;
+        return fieldCropsList;
     }
 
     public void Initialize()
@@ -304,11 +323,12 @@ public class FieldGenerator : MonoBehaviour
     #endregion
 
     #region Sub Functions
-    private void CheckPossiblePosition()
+    private void CheckPossiblePosition(ref bool isEnable, bool preEnable)
     {
-        if (isEnable != FieldCollider.IsUnCollid)
+
+        if (isEnable != preEnable)
         {
-            isEnable = FieldCollider.IsUnCollid;
+            isEnable = preEnable;
             if (isEnable)
                 VisualMaterial.SetColor("_BaseColor", PossibleColor);
             else
