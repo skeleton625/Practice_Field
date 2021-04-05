@@ -34,7 +34,7 @@ public class CropsEntity : MonoBehaviour
             if (cropsTransform == null)
                 return 0;
             else
-                return cropsTransform.Count / 4;
+                return cropsTransform.Count;
         }
     }
 
