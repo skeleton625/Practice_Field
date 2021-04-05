@@ -559,8 +559,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adddf321eb1fbcf4d8340adcd407871a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prototypeList:
-  - {fileID: -7839001759714483451, guid: 543a8f20f32342e439a1f4f2ae344a80, type: 2}
+  prototypeList: []
   autoSelectCamera: 1
   cameraData:
     mainCamera: {fileID: 738646680695097199}
@@ -619,7 +618,7 @@ MonoBehaviour:
   lightProbeDisabled: 0
   _terrain: {fileID: 1593621812}
   additionalTerrains: []
-  terrainSettings: {fileID: 11400000, guid: 543a8f20f32342e439a1f4f2ae344a80, type: 2}
+  terrainSettings: {fileID: 0}
   detailLayer: 0
   runInThreads: 1
   threadHeightResolution: 0
@@ -3956,6 +3955,10 @@ PrefabInstance:
       propertyPath: RayMask.m_Bits
       value: 4096
       objectReference: {fileID: 0}
+    - target: {fileID: 559931544441180271, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
+      propertyPath: RotateMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 9ffe845eb5c23144aaed9b0b4c9e17c3, type: 2}
     - target: {fileID: 3301169456646616081, guid: 66c1831a497e1ce4d8cbdcd9d8241263, type: 3}
       propertyPath: m_Size.x
       value: 2
