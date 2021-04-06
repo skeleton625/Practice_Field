@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7396335493529634518}
   - component: {fileID: 6271816659402694967}
   - component: {fileID: 609384807183418501}
+  - component: {fileID: 9169416502824014518}
   m_Layer: 0
   m_Name: BatDuk_Mid2
   m_TagString: Untagged
@@ -81,3 +82,16 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &9169416502824014518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761022969417831510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f13f42112a552354988a63573e49f5d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefabPrototype: {fileID: 11400000, guid: 03ad5b0c2797348499fbd49919b2711e, type: 2}
