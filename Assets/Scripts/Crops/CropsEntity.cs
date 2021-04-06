@@ -34,11 +34,22 @@ public class CropsEntity : MonoBehaviour
             if (cropsTransform == null)
                 return 0;
             else
-                return cropsTransform.Count;
+            {
+                if (parentEntity != null)
+                    return parentEntity.CropsCount;
+                if (expandEntities == null)
+                    return cropsTransform.Count;
+
+                var count = cropsTransform.Count;
+                foreach (var entity in expandEntities)
+                    count += entity.cropsTransform.Count;
+                return count;
+            }
         }
     }
 
     public CropsEntity ParentEntity { get => parentEntity; }
+    public Vector3[] PolePositions { get => polePositions.ToArray(); }
 
     private void Awake()
     {
@@ -138,6 +149,13 @@ public class CropsEntity : MonoBehaviour
 
     public void ExpandCropsEntity(CropsEntity otherEntity)
     {
+        if (parentEntity != null)
+        {
+            parentEntity.ExpandCropsEntity(otherEntity);
+            return;
+        }
+        if (expandEntities == null)
+            expandEntities = new List<CropsEntity>();
         expandEntities.Add(otherEntity);
         otherEntity.parentEntity = this;
     }
