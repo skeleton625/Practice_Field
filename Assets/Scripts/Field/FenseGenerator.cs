@@ -393,9 +393,9 @@ public class FenseGenerator : MonoBehaviour
                     if(Physics.Raycast(position, -Vector3.up, out RaycastHit hit, 200, RayMask))
                     {
                         var crops = Instantiate(CropsDatas[0].Visual, hit.point, Quaternion.identity);
-                        crops.SetParent(createCrops.transform);
+                        crops.transform.SetParent(createCrops.transform);
                         //crops.gameObject.SetActive(false);
-                        cropsLineList.Add(crops);
+                        cropsLineList.Add(crops.transform);
                     }
                 }
             }

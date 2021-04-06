@@ -4,33 +4,24 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private LayerMask rayMask = default;
     [SerializeField] private UIManager uiManager = null;
     [SerializeField] private TerrainGenerator Generator = null;
-
-    private Camera mainCamera = null;
-
-    private void Start()
-    {
-        mainCamera = Camera.main;
-    }
 
     private void Update()
     {
         if(Input.GetMouseButtonDown(0))
         {
-            var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            if(Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, 1000f))
+            if(RaycastTool.RaycastFromMouse(out RaycastHit hit, rayMask))
             {
                 if (hit.transform.CompareTag("Building"))
-                {
-                    uiManager.SetActiveButtonWindows(0, hit.transform.GetHashCode());
-                }
+                    uiManager.SetActiveCreateWindow();
+                else if (hit.transform.CompareTag("Crops"))
+                    uiManager.SetActiveExpandWindow(hit.transform.GetComponent<CropsEntity>());
             }    
         }
 
         if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            uiManager.SetActiveButtonWindows(2, 0);
-        }
+            uiManager.SetDeactiveWindows();
     }
 }

@@ -1,28 +1,45 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
+    [Header("Field Generator")]
     [SerializeField] private FieldGenerator fieldGenerator = null;
+    [SerializeField] private LayerMask RayMask;
+    [Header("Crops UI Setting")]
     [SerializeField] private GameObject CreateWindow = null;
-    [SerializeField] private GameObject ExpendWindow = null;
+    [SerializeField] private GameObject ExpandWindow = null;
+    [SerializeField] private Transform FieldPoleTransform = null;
+    [Header("Crops Text Setting")]
     [SerializeField] private Text CreateCropsCount = null;
-    [SerializeField] private Text ExpendEntireCount = null;
-    [SerializeField] private Text ExpendCurrentCount = null;
+    [SerializeField] private Text ExpandEntireCount = null;
+    [SerializeField] private Text ExpandCurrentCount = null;
 
     private int buildingHash = 0;
+    private bool isRotateField = false;
     private bool isMakingField = false;
     private bool isExpandField = false;
-    private bool isDeleteField = false;
     private Coroutine fieldCoroutine = null;
+    private CropsEntity expandEntity = null;
+    private Queue<Transform> poleActiveQueue = null;
+    private Queue<Transform> poleTransformQueue = null;
 
-    public bool IsDeleteField { get => isDeleteField; }
     public static UIManager Instance = null;
 
     private void Awake()
     {
         Instance = this;
+
+        poleActiveQueue = new Queue<Transform>();
+        poleTransformQueue = new Queue<Transform>();
+        for(int i = 0; i < 40; i++)
+        {
+            var pole = Instantiate(FieldPoleTransform, Vector3.zero, Quaternion.identity);
+            pole.gameObject.SetActive(false);
+            poleTransformQueue.Enqueue(pole);
+        }
     }
 
     public void OnClickCreateField()
@@ -30,7 +47,7 @@ public class UIManager : MonoBehaviour
         if (!isMakingField)
         {
             fieldGenerator.gameObject.SetActive(true);
-            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine(false));
+            fieldCoroutine = StartCoroutine(fieldGenerator.MakeFieldCoroutine());
             isMakingField = true;
         }
     }
@@ -40,20 +57,16 @@ public class UIManager : MonoBehaviour
         if (!isExpandField)
         {
             fieldGenerator.gameObject.SetActive(true);
-            fieldCoroutine = StartCoroutine(fieldGenerator.MakeBuildingCoroutine(true));
+            fieldCoroutine = StartCoroutine(fieldGenerator.ExpandFieldCoroutine(expandEntity, isRotateField));
             isExpandField = true;
         }
     }
 
-    public void OnClickStartBuild(bool isExpension)
+    public void OnClickStartBuild(bool isExpand)
     {
-        InitializeWindows(0);
-        StartCoroutine(fieldGenerator.StartBuildCoroutine());
-    }
-
-    public void OnClickDeleteField()
-    {
-        isDeleteField = !isDeleteField;
+        fieldCoroutine = StartCoroutine(fieldGenerator.StartBuildCoroutine());
+        InitializeWindows(isExpand ? 1 : 0);
+        InitializeCoroutine();
     }
 
     public void ChangeCropsCount(int type, int cropsCount)
@@ -64,72 +77,107 @@ public class UIManager : MonoBehaviour
                 CreateCropsCount.text = cropsCount.ToString();
                 break;
             case 1:
-                ExpendCurrentCount.text = cropsCount.ToString();
+                ExpandCurrentCount.text = cropsCount.ToString();
                 break;
             case 2:
-                ExpendEntireCount.text = cropsCount.ToString();
+                ExpandEntireCount.text = cropsCount.ToString();
                 break;
         }
     }
 
-    public void SetActiveButtonWindows(int type, int hashCode)
+    public void SetActiveCreateWindow()
     {
-        switch (type)
+        if (ExpandWindow.activeSelf)
+            return;
+
+        CreateWindow.SetActive(true);
+        CreateCropsCount.text = "0";
+    }
+
+    public void SetActiveExpandWindow(CropsEntity entity)
+    {
+        if (CreateWindow.activeSelf)
+            return;
+
+        var hashCode = entity.transform.GetHashCode();
+        if (buildingHash != hashCode)
         {
-            case 0:
-                if (ExpendWindow.activeSelf)
-                    return;
+            expandEntity = entity;
+            buildingHash = hashCode;
+            SetDeactivePoleCollider();
+        }
+        else
+            return;
 
-                buildingHash = hashCode;
-                CreateWindow.SetActive(true);
-                CreateCropsCount.text = "0";
-                break;
-            case 1:
-                if (CreateWindow.activeSelf)
-                    return;
+        isRotateField = entity.transform.rotation == Quaternion.Euler(90, 0, -45);
+        ExpandEntireCount.text = entity.CropsCount.ToString();
+        ExpandCurrentCount.text = "0";
+        ExpandWindow.SetActive(true);
 
-                buildingHash = hashCode;
-                ExpendWindow.SetActive(true);
-                ExpendCurrentCount.text = "0";
-                break;
-            case 2:
-                if (CreateWindow.activeSelf)
-                {
-                    InitializeCoroutine();
-                    InitializeWindows(0);
-                }
+        var polePositions = entity.PolePositions;
+        foreach(var position in polePositions)
+        {
+            var pole = poleTransformQueue.Dequeue();
+            pole.position = RaycastTool.RaycastFromUp(position, RayMask);
+            pole.gameObject.SetActive(true);
+            pole.parent = entity.transform;
+            poleActiveQueue.Enqueue(pole);
+        }
+    }
 
-                else if (ExpendWindow.activeSelf)
-                {
-                    InitializeCoroutine();
-                    InitializeWindows(1);
-                }
-                break;
+    public void SetDeactiveWindows()
+    {
+        if (CreateWindow.activeSelf)
+        {
+            InitializeCoroutine();
+            InitializeWindows(0);
+        }
+        else if (ExpandWindow.activeSelf)
+        {
+            InitializeCoroutine();
+            InitializeWindows(1);
+        }
+    }
+
+    private void SetDeactivePoleCollider()
+    {
+        while (poleActiveQueue.Count > 0)
+        {
+            var pole = poleActiveQueue.Dequeue();
+            poleTransformQueue.Enqueue(pole);
+            pole.gameObject.SetActive(false);
+            pole.position = Vector3.zero;
+            pole.parent = null;
         }
     }
 
     private void InitializeWindows(int type)
     {
-        
         switch (type)
         {
             case 0:
-                isMakingField = false;
                 CreateWindow.SetActive(false);
                 break;
             case 1:
-                isExpandField = false;
-                ExpendWindow.SetActive(false);
+                ExpandWindow.SetActive(false);
+                SetDeactivePoleCollider();
                 break;
         }
-
-        isDeleteField = false;
         buildingHash = 0;
     }
 
-    private void InitializeCoroutine()
+    public void InitializeCoroutine()
     {
-        StopCoroutine(fieldCoroutine);
-        fieldCoroutine = null;
+        if (isExpandField)
+            isExpandField = false;
+        if (isMakingField)
+            isMakingField = false;
+
+        if(fieldCoroutine != null)
+        {
+            StopCoroutine(fieldCoroutine);
+            fieldCoroutine = null;
+        }
+        fieldGenerator.gameObject.SetActive(false);
     }
 }
