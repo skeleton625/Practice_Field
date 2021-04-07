@@ -49,12 +49,15 @@ public class CropsEntity : MonoBehaviour
     }
 
     public CropsEntity ParentEntity { get => parentEntity; }
+    public CropsEntity[] ExpandEntities { get => expandEntities.ToArray(); }
     public Vector3[] PolePositions { get => polePositions.ToArray(); }
 
     private void Awake()
     {
-        cropsTransform = new List<Transform>();
         polePositions = new List<Vector3>();
+        cropsTransform = new List<Transform>();
+        expandEntities = new List<CropsEntity>();
+        expandEntities.Add(this);
     }
 
     private void Update()
@@ -154,8 +157,7 @@ public class CropsEntity : MonoBehaviour
             parentEntity.ExpandCropsEntity(otherEntity);
             return;
         }
-        if (expandEntities == null)
-            expandEntities = new List<CropsEntity>();
+
         expandEntities.Add(otherEntity);
         otherEntity.parentEntity = this;
     }
