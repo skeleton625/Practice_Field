@@ -142,7 +142,9 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - SelectValue: 0
     - Vector1_3c9f446ad86e42a28e7b7121c6534c2a: 0
+    - Vector1_5d446daacfa94e72b4e0104c90bcea12: 1
     - _AORemapMax: 1
     - _AORemapMin: 0
     - _ATDistance: 1
@@ -268,9 +270,10 @@ Material:
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
     - _ZTestModeDistortion: 4
-    - _ZTestTransparent: 4
+    - _ZTestTransparent: 0
     - _ZWrite: 1
     m_Colors:
+    - Color_ff7efbeeaa774ca7a992bcd3b67ef5a7: {r: 0.22441936, g: 1, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
