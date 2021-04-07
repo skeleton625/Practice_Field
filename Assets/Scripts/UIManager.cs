@@ -1,13 +1,16 @@
 ﻿using System.Collections.Generic;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 public class UIManager : MonoBehaviour
 {
+    #region SerializeField Variable
     [Header("Field Generator")]
     [SerializeField] private FieldGenerator fieldGenerator = null;
     [SerializeField] private LayerMask RayMask;
+    [Header("Building UI Setting")]
+    [SerializeField] private DecalProjector OutlineUI = null;
     [Header("Crops UI Setting")]
     [SerializeField] private GameObject CreateWindow = null;
     [SerializeField] private GameObject ExpandWindow = null;
@@ -16,7 +19,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text CreateCropsCount = null;
     [SerializeField] private Text ExpandEntireCount = null;
     [SerializeField] private Text ExpandCurrentCount = null;
+    #endregion
 
+    #region Global Private Variable
     private int buildingHash = 0;
     private bool isRotateField = false;
     private bool isMakingField = false;
@@ -25,23 +30,15 @@ public class UIManager : MonoBehaviour
     private CropsEntity expandEntity = null;
     private Queue<Transform> poleActiveQueue = null;
     private Queue<Transform> poleTransformQueue = null;
+    private Queue<DecalProjector> outlineUIQueue = null;
+    private Queue<DecalProjector> outlineUIActiveQueue = null;
+    #endregion
 
+    #region Singleton Variable
     public static UIManager Instance = null;
+    #endregion
 
-    private void Awake()
-    {
-        Instance = this;
-
-        poleActiveQueue = new Queue<Transform>();
-        poleTransformQueue = new Queue<Transform>();
-        for(int i = 0; i < 40; i++)
-        {
-            var pole = Instantiate(FieldPoleTransform, Vector3.zero, Quaternion.identity);
-            pole.gameObject.SetActive(false);
-            poleTransformQueue.Enqueue(pole);
-        }
-    }
-
+    #region UI Functions
     public void OnClickCreateField()
     {
         if (!isMakingField)
@@ -84,7 +81,9 @@ public class UIManager : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
+    #region Active Functions
     public void SetActiveCreateWindow()
     {
         if (ExpandWindow.activeSelf)
@@ -123,8 +122,43 @@ public class UIManager : MonoBehaviour
             pole.parent = entity.transform;
             poleActiveQueue.Enqueue(pole);
         }
+
+        if(entity.ParentEntity != null)
+        {
+            var expandEntities = entity.ParentEntity.ExpandEntities;
+            foreach (var child in expandEntities)
+            {
+                var size = child.GetComponent<DecalProjector>().size;
+                size.x += 3;
+                size.y += 3;
+                SetActiveOutlineUI(child.transform, size);
+            }
+        }
+        else
+        {
+            var expandEntities = entity.ExpandEntities;
+            foreach (var child in expandEntities)
+            {
+                var size = child.GetComponent<DecalProjector>().size;
+                size.x += 3;
+                size.y += 3;
+                SetActiveOutlineUI(child.transform, size);
+            }
+        }
     }
 
+    private void SetActiveOutlineUI(Transform parent, Vector3 size)
+    {
+        var outline = outlineUIQueue.Dequeue();
+        outline.size = size;
+        outline.transform.parent = parent;
+        outline.transform.localPosition = Vector3.forward;
+        outline.gameObject.SetActive(true);
+        outlineUIActiveQueue.Enqueue(outline);
+    }
+    #endregion
+
+    #region Deactive Functions
     public void SetDeactiveWindows()
     {
         if (CreateWindow.activeSelf)
@@ -148,6 +182,42 @@ public class UIManager : MonoBehaviour
             pole.gameObject.SetActive(false);
             pole.position = Vector3.zero;
             pole.parent = null;
+        }
+
+        while(outlineUIActiveQueue.Count > 0)
+        {
+            var outline = outlineUIActiveQueue.Dequeue();
+            outlineUIQueue.Enqueue(outline);
+            outline.gameObject.SetActive(false);
+            outline.transform.position = Vector3.zero;
+            outline.transform.parent = null;
+            outline.size = Vector3.forward * 2;
+        }
+    }
+    #endregion
+
+    #region Initialize Functions
+    private void Awake()
+    {
+        Instance = this;
+
+        poleActiveQueue = new Queue<Transform>();
+        poleTransformQueue = new Queue<Transform>();
+
+        outlineUIQueue = new Queue<DecalProjector>();
+        outlineUIActiveQueue = new Queue<DecalProjector>();
+        for (int i = 0; i < 40; i++)
+        {
+            var pole = Instantiate(FieldPoleTransform, Vector3.zero, Quaternion.identity);
+            pole.gameObject.SetActive(false);
+            poleTransformQueue.Enqueue(pole);
+        }
+
+        for (int i = 0; i < 40; i++)
+        {
+            var outline = Instantiate(OutlineUI, Vector3.zero, Quaternion.Euler(-90, 0, 0));
+            outline.gameObject.SetActive(false);
+            outlineUIQueue.Enqueue(outline);
         }
     }
 
@@ -180,4 +250,5 @@ public class UIManager : MonoBehaviour
         }
         fieldGenerator.gameObject.SetActive(false);
     }
+    #endregion
 }
