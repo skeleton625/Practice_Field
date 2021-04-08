@@ -40,6 +40,14 @@ public class RaycastTool
         return false;
     }
 
+    public static bool RaycastFromUp(Vector3 position, out RaycastHit hit, LayerMask rayMask)
+    {
+        position.y = 100f;
+        if (Physics.Raycast(position, -Vector3.up, out hit, 1000f, rayMask))
+            return true;
+        return false;
+    }
+
     public static Vector3 RaycastFromUp(Vector3 position, LayerMask rayMask)
     {
         position.y = 100f;
