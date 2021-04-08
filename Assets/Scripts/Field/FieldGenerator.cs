@@ -91,7 +91,7 @@ public class FieldGenerator : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if(other.CompareTag("FensePole"))
+        if(other.CompareTag("FensePole") && !isFixed)
         {
             isConnected = false;
             FieldVisual.transform.parent = FieldBody;
@@ -247,20 +247,20 @@ public class FieldGenerator : MonoBehaviour
         int partScaleX = 0, partScaleZ = 0;
         var nextPosition = Vector3.zero;
         var localRotation = Vector3.zero;
-        var fieldPartScale = Vector3Int.one;
+        var fieldPartScale = Vector3.one;
         while (true)
         {
             if (RaycastTool.RaycastFromMouse(ref rayPosition, RayMask))
             {
                 nextPosition = fieldSpace * rayPosition;
-                fieldPartScale.x = Mathf.FloorToInt(nextPosition.x - startPosition.x);
-                fieldPartScale.z = Mathf.FloorToInt(nextPosition.z - startPosition.z);
+                fieldPartScale.x = nextPosition.x - startPosition.x;
+                fieldPartScale.z = nextPosition.z - startPosition.z;
 
                 localRotation.x = fieldPartScale.z < 0 ? 180 : 0;
                 localRotation.z = fieldPartScale.x < 0 ? 180 : 0;
                 localRotation.y = localRotation.x + localRotation.z;
-                partScaleX = Mathf.Clamp(Mathf.Abs(fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
-                partScaleZ = Mathf.Clamp(Mathf.Abs(fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
+                partScaleX = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
+                partScaleZ = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
                 fieldPartScale.x = partScaleX;
                 fieldPartScale.z = partScaleZ;
             }
