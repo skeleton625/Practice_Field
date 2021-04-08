@@ -518,6 +518,9 @@
         },
         {
             "m_Id": "ef4ebd2277f142509387b3f1556584d4"
+        },
+        {
+            "m_Id": "9b5089d4d75b4f03ab15bd88463c34d7"
         }
     ],
     "synonyms": [],
@@ -1103,6 +1106,21 @@
     },
     "m_Labels": [],
     "m_Space": 0
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "9b5089d4d75b4f03ab15bd88463c34d7",
+    "m_Id": 2,
+    "m_DisplayName": "Out_Alpha",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out_Alpha",
+    "m_StageCapability": 2,
+    "m_Value": 0.0,
+    "m_DefaultValue": 0.0,
+    "m_Labels": []
 }
 
 {
