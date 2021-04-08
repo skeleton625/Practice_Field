@@ -83,6 +83,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d58dcdfdad65f134c8bf37171e10afde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HumanTimer: 0
-  MonthTimer: 0
-  CropSpeed: 0
+  HumanTimer: 1
+  MonthTimer: 60
+  CropSpeed: 1
