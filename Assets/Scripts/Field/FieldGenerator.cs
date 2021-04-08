@@ -16,14 +16,14 @@ public class FieldGenerator : MonoBehaviour
     [SerializeField] private Vector3 InitScale = default;
     [SerializeField] private LayerMask RayMask = default;
     [SerializeField] private Transform FieldBody = null;
-    [SerializeField] private Transform FieldVisual = null;
     [SerializeField] private CropsEntity FieldEntity = null;
+    [SerializeField] private DecalProjector FieldVisual = null;
     [Header("BatDuk Transform Setting")]
     [SerializeField] private GPUInstancerPrefab BatDukMid = null;
     [SerializeField] private GPUInstancerPrefab BatDukSide = null;
     [SerializeField] private Transform RotateSpace = null;
     [Header("Field UI Setting")]
-    [SerializeField] private Material VisualMaterial = null;
+    [SerializeField] private Material FieldGrid = null;
     [SerializeField] private Color PossibleColor = Color.white;
     [SerializeField] private Color ImpossibleColor = Color.white;
     [Header("Field Crops Setting")]
@@ -49,6 +49,20 @@ public class FieldGenerator : MonoBehaviour
         Initialize();
     }
 
+    private void OnDisable()
+    {
+        transform.position = Vector3.zero;
+        FieldBody.localScale = InitScale;
+        FieldBody.localPosition = Vector3.zero;
+        FieldVisual.size = new Vector3(PartScale, PartScale, 5);
+        FieldVisual.transform.parent = FieldBody;
+        FieldVisual.transform.localPosition = Vector3.up;
+        FieldVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        FieldGrid.SetFloat("_Rotate", 90);
+        FieldGrid.SetVector("_Offset", new Vector2(0, .5f));
+        FieldGrid.SetColor("_OutlineColor", PossibleColor);
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.E))
@@ -70,8 +84,8 @@ public class FieldGenerator : MonoBehaviour
         if(other.CompareTag("FensePole") && !isFixed)
         {
             isConnected = true;
-            FieldVisual.parent = null;
-            FieldVisual.position = other.transform.position + Vector3.up;
+            FieldVisual.transform.parent = null;
+            FieldVisual.transform.position = other.transform.position + Vector3.up;
         }
     }
 
@@ -80,8 +94,9 @@ public class FieldGenerator : MonoBehaviour
         if(other.CompareTag("FensePole"))
         {
             isConnected = false;
-            FieldVisual.parent = FieldBody;
-            FieldVisual.localPosition = Vector3.up;
+            FieldVisual.transform.parent = FieldBody;
+            FieldVisual.transform.localPosition = Vector3.up;
+            FieldVisual.transform.localScale = Vector3.one;
         }
     }
     #endregion
@@ -130,11 +145,11 @@ public class FieldGenerator : MonoBehaviour
         }
 
         this.isRotate = isRotate;
-        transform.position = FieldVisual.position;
+        transform.position = FieldVisual.transform.position;
         transform.localRotation = Quaternion.identity;
         FieldBody.localPosition = new Vector3(-PartScale / 2, 0, -PartScale / 2);
-        FieldVisual.parent = FieldBody;
-        FieldVisual.localPosition = new Vector3(.5f, 0, .5f);
+        FieldVisual.transform.parent = FieldBody;
+        FieldVisual.transform.localPosition = new Vector3(.5f, 0, .5f);
 
         int partScaleX = 0, partScaleZ = 0;
         var nextPosition = Vector3.zero;
@@ -147,9 +162,10 @@ public class FieldGenerator : MonoBehaviour
                 nextPosition = fieldSpace * rayPosition;
                 fieldPartScale.x = nextPosition.x - startPosition.x;
                 fieldPartScale.z = nextPosition.z - startPosition.z;
-
+ 
                 localRotation.x = fieldPartScale.z < 0 ? 180 : 0;
                 localRotation.z = fieldPartScale.x < 0 ? 180 : 0;
+                localRotation.y = localRotation.x + localRotation.z;
                 partScaleX = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
                 partScaleZ = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
                 fieldPartScale.x = partScaleX;
@@ -173,8 +189,10 @@ public class FieldGenerator : MonoBehaviour
                 }
             }
 
-            transform.localRotation = Quaternion.Euler(localRotation);
+            transform.localRotation = Quaternion.Euler(localRotation.x, 0, localRotation.z);
             FieldBody.localScale = fieldPartScale;
+            FieldVisual.transform.localRotation = Quaternion.Euler(localRotation.y + 90, 0, 0);
+            FieldVisual.size = new Vector3(fieldPartScale.x, fieldPartScale.z, 5);
             yield return null;
         }
     }
@@ -213,41 +231,42 @@ public class FieldGenerator : MonoBehaviour
             if (RaycastTool.RaycastFromMouse(ref rayPosition, RayMask))
             {
                 startPosition = fieldSpace * rayPosition;
-                startPosition.x = (int)(startPosition.x / PartScale) * PartScale + PartScale / 2;
-                startPosition.z = (int)(startPosition.z / PartScale) * PartScale + PartScale / 2;
+                startPosition.x = Mathf.FloorToInt(startPosition.x / PartScale) * PartScale + PartScale / 2;
+                startPosition.z = Mathf.FloorToInt(startPosition.z / PartScale) * PartScale + PartScale / 2;
                 transform.localPosition = startPosition;
             }
             yield return null;
         }
 
-        transform.position = FieldVisual.position;
+        transform.position = FieldVisual.transform.position;
         transform.localRotation = Quaternion.identity;
         FieldBody.localPosition = new Vector3(-PartScale / 2, 0, -PartScale / 2);
-        FieldVisual.parent = FieldBody;
-        FieldVisual.localPosition = new Vector3(.5f, 0, .5f);
+        FieldVisual.transform.parent = FieldBody;
+        FieldVisual.transform.localPosition = new Vector3(.5f, 0, .5f);
 
         int partScaleX = 0, partScaleZ = 0;
         var nextPosition = Vector3.zero;
         var localRotation = Vector3.zero;
-        var fieldPartScale = Vector3.one;
+        var fieldPartScale = Vector3Int.one;
         while (true)
         {
             if (RaycastTool.RaycastFromMouse(ref rayPosition, RayMask))
             {
                 nextPosition = fieldSpace * rayPosition;
-                fieldPartScale.x = nextPosition.x - startPosition.x;
-                fieldPartScale.z = nextPosition.z - startPosition.z;
+                fieldPartScale.x = Mathf.FloorToInt(nextPosition.x - startPosition.x);
+                fieldPartScale.z = Mathf.FloorToInt(nextPosition.z - startPosition.z);
 
                 localRotation.x = fieldPartScale.z < 0 ? 180 : 0;
                 localRotation.z = fieldPartScale.x < 0 ? 180 : 0;
-                partScaleX = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
-                partScaleZ = Mathf.Clamp(Mathf.Abs((int)fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
+                localRotation.y = localRotation.x + localRotation.z;
+                partScaleX = Mathf.Clamp(Mathf.Abs(fieldPartScale.x / PartScale * PartScale) + PartScale, 2, LimitScale);
+                partScaleZ = Mathf.Clamp(Mathf.Abs(fieldPartScale.z / PartScale * PartScale) + PartScale, 2, LimitScale);
                 fieldPartScale.x = partScaleX;
                 fieldPartScale.z = partScaleZ;
             }
 
             preEnable = fieldCollider.IsUnCollid && partScaleX > 2 && partScaleZ > 2 && isConnected;
-            CheckPossiblePosition(ref isEnable, preEnable);
+            //CheckPossiblePosition(ref isEnable, preEnable);
             if (Input.GetMouseButtonUp(0))
             {
                 if (isEnable)
@@ -264,7 +283,9 @@ public class FieldGenerator : MonoBehaviour
                 }
             }
 
-            transform.localRotation = Quaternion.Euler(localRotation);
+            FieldVisual.transform.localRotation = Quaternion.Euler(localRotation.y + 90, 0, 0);
+            FieldVisual.size = new Vector3(fieldPartScale.x, fieldPartScale.z, 5);
+            transform.localRotation = Quaternion.Euler(localRotation.x, 0, localRotation.z);
             FieldBody.localScale = fieldPartScale;
             yield return null;
         }
@@ -272,9 +293,9 @@ public class FieldGenerator : MonoBehaviour
 
     public IEnumerator StartBuildCoroutine()
     {
-        var fieldEntity = Instantiate(FieldEntity, FieldVisual.position, Quaternion.Euler(90, reverseFieldSpace.eulerAngles.y, 0));
+        var fieldEntity = Instantiate(FieldEntity, FieldVisual.transform.position, Quaternion.Euler(90, reverseFieldSpace.eulerAngles.y, 0));
         fieldEntity.GetComponent<DecalProjector>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
-        fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x - 1, FieldBody.localScale.z - 1, 5);
+        fieldEntity.GetComponent<BoxCollider>().size = new Vector3(FieldBody.localScale.x, FieldBody.localScale.z, 5);
         fieldEntity.transform.parent = fieldEntity.transform;
         if (isRotate)
             fieldEntity.GetComponent<DecalProjector>().material = RotateMaterial;
@@ -291,13 +312,13 @@ public class FieldGenerator : MonoBehaviour
 
     private List<Vector3> GenerateBatDuk(Transform parent)
     {
-        int zScale = (int)FieldBody.localScale.z / 2;
-        int xScale = (int)FieldBody.localScale.x / 2;
+        var zScale = Mathf.FloorToInt(FieldBody.localScale.z) / 2;
+        var xScale = Mathf.FloorToInt(FieldBody.localScale.x) / 2;
         var vertexPosition = new List<Vector3>();
-        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, -zScale) + FieldVisual.position);
-        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, zScale) + FieldVisual.position);
-        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, zScale) + FieldVisual.position);
-        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, -zScale) + FieldVisual.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, -zScale) + FieldVisual.transform.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(-xScale, 100, zScale) + FieldVisual.transform.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, zScale) + FieldVisual.transform.position);
+        vertexPosition.Add(reverseFieldSpace * new Vector3(xScale, 100, -zScale) + FieldVisual.transform.position);
 
         for(int i = 0; i < 4; i++)
         {
@@ -347,28 +368,20 @@ public class FieldGenerator : MonoBehaviour
         return polePosition;
     }
 
-    private List<Transform> GenerateFieldCrops(Transform parent)
+    private List<Vector3> GenerateFieldCrops(Transform parent)
     {
         var oddCheck = 0;
-        var zScale = (int)FieldBody.localScale.z / 2;
-        var xScale = (int)FieldBody.localScale.x / 2;
-        var startPosition = FieldVisual.position + reverseFieldSpace * new Vector3(1, 0, 1);
+        var zScale = Mathf.FloorToInt(FieldBody.localScale.z) / 2;
+        var xScale = Mathf.FloorToInt(FieldBody.localScale.x) / 2;
+        var startPosition = FieldVisual.transform.position + reverseFieldSpace * new Vector3(1, 0, 1);
 
-        var tmpCropsList = new List<Transform>();
-        var fieldCropsList = new List<Transform>();
+        var tmpCropsList = new List<Vector3>();
+        var fieldCropsList = new List<Vector3>();
         var rotateY = new float[4] { 0, 90, 180, 270 };
         for (int z = -zScale + 1; z < zScale - 1; z += 2)
         {
             for(int x = -xScale + 1; x < xScale - 1; x += 2)
-            {
-                var position = RaycastTool.RaycastFromUp(reverseFieldSpace * new Vector3(x, 0, z) + startPosition, RayMask);
-                var rotation = Quaternion.Euler(0, rotateY[Random.Range(0, 4)] + (isRotate ? 45 : 0), 0);
-                var crops = Instantiate(FieldData.Visual, position, rotation);
-                tmpCropsList.Add(crops.transform);
-                crops.transform.parent = parent;
-
-                GPUInstancerAPI.AddPrefabInstance(CropsManager, crops);
-            }
+                tmpCropsList.Add(RaycastTool.RaycastFromUp(reverseFieldSpace * new Vector3(x, 0, z) + startPosition, RayMask));
 
             if ((oddCheck % 2).Equals(1))
                 tmpCropsList.Reverse();
@@ -389,13 +402,6 @@ public class FieldGenerator : MonoBehaviour
         fieldSpace = Quaternion.identity;
         reverseFieldSpace = Quaternion.identity;
         transform.localRotation = Quaternion.identity;
-
-        transform.position = Vector3.zero;
-        FieldVisual.parent = FieldBody;
-        FieldBody.localScale = InitScale;
-        FieldBody.localPosition = Vector3.zero;
-        FieldVisual.localPosition = Vector3.up;
-        VisualMaterial.SetColor("_BaseColor", PossibleColor);
     }
     #endregion
 
@@ -407,9 +413,9 @@ public class FieldGenerator : MonoBehaviour
         {
             isEnable = preEnable;
             if (isEnable)
-                VisualMaterial.SetColor("_BaseColor", PossibleColor);
+                FieldGrid.SetColor("_OutlineColor", PossibleColor);
             else
-                VisualMaterial.SetColor("_BaseColor", ImpossibleColor);
+                FieldGrid.SetColor("_OutlineColor", ImpossibleColor);
         }
     }
 
@@ -422,6 +428,8 @@ public class FieldGenerator : MonoBehaviour
             transform.localRotation = Quaternion.identity;
             fieldSpace.y = -reverseFieldSpace.y;
             fieldSpace.w = reverseFieldSpace.w;
+            FieldGrid.SetFloat("_Rotate", 45);
+            FieldGrid.SetVector("_Offset", new Vector2(.105f, -.25f));
         }
         else
         {
@@ -429,6 +437,8 @@ public class FieldGenerator : MonoBehaviour
             reverseFieldSpace = Quaternion.identity;
             transform.localRotation = Quaternion.identity;
             fieldSpace = reverseFieldSpace;
+            FieldGrid.SetFloat("_Rotate", 90);
+            FieldGrid.SetVector("_Offset", new Vector2(0, .5f));
         }
     }
     #endregion

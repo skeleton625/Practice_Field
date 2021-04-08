@@ -53,6 +53,19 @@ public class UIManager : MonoBehaviour
     {
         if (!isExpandField)
         {
+            if (expandEntity.ParentEntity != null)
+            {
+                var childEntities = expandEntity.ParentEntity.ExpandEntities;
+                foreach (var entity in childEntities)
+                    SetActiveColliderPole(entity);
+            }
+            else
+            {
+                var childEntities = expandEntity.ExpandEntities;
+                foreach (var entity in childEntities)
+                    SetActiveColliderPole(entity);
+            }
+
             fieldGenerator.gameObject.SetActive(true);
             fieldCoroutine = StartCoroutine(fieldGenerator.ExpandFieldCoroutine(expandEntity, isRotateField));
             isExpandField = true;
@@ -113,16 +126,6 @@ public class UIManager : MonoBehaviour
         ExpandCurrentCount.text = "0";
         ExpandWindow.SetActive(true);
 
-        var polePositions = entity.PolePositions;
-        foreach(var position in polePositions)
-        {
-            var pole = poleTransformQueue.Dequeue();
-            pole.position = RaycastTool.RaycastFromUp(position, RayMask);
-            pole.gameObject.SetActive(true);
-            pole.parent = entity.transform;
-            poleActiveQueue.Enqueue(pole);
-        }
-
         if(entity.ParentEntity != null)
         {
             var expandEntities = entity.ParentEntity.ExpandEntities;
@@ -155,6 +158,29 @@ public class UIManager : MonoBehaviour
         outline.transform.localPosition = Vector3.forward;
         outline.gameObject.SetActive(true);
         outlineUIActiveQueue.Enqueue(outline);
+    }
+
+    private void SetActiveColliderPole(CropsEntity entity)
+    {
+        Transform pole;
+        var polePosition = entity.PolePositions;
+        foreach (var position in polePosition)
+        {
+            if (RaycastTool.RaycastFromUp(position, out RaycastHit hit, RayMask) &&
+                hit.transform.CompareTag("Terrain"))
+            {
+                if (poleTransformQueue.Count > 0)
+                {
+                    pole = poleTransformQueue.Dequeue();
+                    pole.position = hit.point;
+                    pole.gameObject.SetActive(true);
+                }
+                else
+                    pole = Instantiate(FieldPoleTransform, position, Quaternion.identity);
+                pole.parent = entity.transform;
+                poleActiveQueue.Enqueue(pole);
+            }
+        }
     }
     #endregion
 
