@@ -348,13 +348,13 @@ public class FenseGenerator : MonoBehaviour
         clone.transform.position = new Vector3(centerX, 0, centerZ);
         var direction = (poleTransform[3].position - poleTransform[0].position).normalized;
         var rotationY = Mathf.Acos(Vector3.Dot(direction, Vector3.right)) * 180 / Mathf.PI;
-        var cropsFieldList = new List<Transform>();
+        var cropsFieldPosition = new List<Vector3>();
 
         cropsDetail = new bool[ez - sz + 1, ex - sx + 1];
         cropsLayer = new float[ez - sz + 1, ex - sx + 1];
         for (int x = sx; x <= ex; x++)
         {
-            var cropsLineList = new List<Transform>();
+            var cropsLinePosition = new List<Vector3>();
             for (int z = sz; z <= ez; z++)
             {
                 var position = Quaternion.Euler(0, rotationY, 0) * new Vector3(x - centerX, 0, z - centerZ);
@@ -388,33 +388,24 @@ public class FenseGenerator : MonoBehaviour
                 }
 
                 if (inCrops && (cropsX % 2).Equals(1) && (cropsZ % 2).Equals(1))
-                {
-                    position.y += 100;
-                    if(Physics.Raycast(position, -Vector3.up, out RaycastHit hit, 200, RayMask))
-                    {
-                        var crops = Instantiate(CropsDatas[0].Visual, hit.point, Quaternion.identity);
-                        crops.transform.SetParent(createCrops.transform);
-                        //crops.gameObject.SetActive(false);
-                        cropsLineList.Add(crops.transform);
-                    }
-                }
+                    cropsLinePosition.Add(RaycastTool.RaycastFromUp(position, RayMask));
             }
 
             if ((x % 2).Equals(0))
             {
                 ++odd;
                 if ((odd % 2).Equals(1))
-                    cropsLineList.Reverse();
-                cropsFieldList.AddRange(cropsLineList);
+                    cropsLinePosition.Reverse();
+                cropsFieldPosition.AddRange(cropsLinePosition);
             }
         }
 
         startPosition.x = sx - 1;
         startPosition.y = sz - 1;
         if (isExpension)
-            expendCrops.AddCrops(cropsFieldList, null);
+            expendCrops.AddCrops(cropsFieldPosition, null);
         else
-            createCrops.AddCrops(cropsFieldList, null);
+            createCrops.AddCrops(cropsFieldPosition, null);
     }
     #endregion
 
@@ -591,7 +582,7 @@ public class FenseGenerator : MonoBehaviour
     private bool IsSquareForm(Vector3 lastPosition)
     {
         var angle = Vector3.Angle(poleTransform[0].position - poleTransform[1].position, 
-                                    poleTransform[2].position - poleTransform[1].position);
+                                  poleTransform[2].position - poleTransform[1].position);
         angle += Vector3.Angle(poleTransform[1].position - poleTransform[2].position, 
                                lastPosition - poleTransform[2].position);
         angle += Vector3.Angle(poleTransform[2].position - lastPosition, 
