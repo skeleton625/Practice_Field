@@ -26,6 +26,7 @@ public class UIManager : MonoBehaviour
     private bool isRotateField = false;
     private bool isMakingField = false;
     private bool isExpandField = false;
+    private bool isDeleteField = false;
     private Coroutine fieldCoroutine = null;
     private CropsEntity expandEntity = null;
     private Queue<Transform> poleActiveQueue = null;
@@ -57,19 +58,25 @@ public class UIManager : MonoBehaviour
             {
                 var childEntities = expandEntity.ParentEntity.ExpandEntities;
                 foreach (var entity in childEntities)
-                    SetActiveColliderPole(entity);
+                    SetActivePoleCollider(entity);
             }
             else
             {
                 var childEntities = expandEntity.ExpandEntities;
                 foreach (var entity in childEntities)
-                    SetActiveColliderPole(entity);
+                    SetActivePoleCollider(entity);
             }
 
             fieldGenerator.gameObject.SetActive(true);
             fieldCoroutine = StartCoroutine(fieldGenerator.ExpandFieldCoroutine(expandEntity, isRotateField));
             isExpandField = true;
         }
+    }
+
+    public void OnClickDeleteField()
+    {
+        fieldCoroutine = StartCoroutine(fieldGenerator.DestroyFieldCoroutine());
+        SetDeactiveOutlineUI();
     }
 
     public void OnClickStartBuild(bool isExpand)
@@ -116,6 +123,7 @@ public class UIManager : MonoBehaviour
         {
             expandEntity = entity;
             buildingHash = hashCode;
+            SetDeactiveOutlineUI();
             SetDeactivePoleCollider();
         }
         else
@@ -132,8 +140,6 @@ public class UIManager : MonoBehaviour
             foreach (var child in expandEntities)
             {
                 var size = child.GetComponent<DecalProjector>().size;
-                size.x += 3;
-                size.y += 3;
                 SetActiveOutlineUI(child.transform, size);
             }
         }
@@ -143,24 +149,25 @@ public class UIManager : MonoBehaviour
             foreach (var child in expandEntities)
             {
                 var size = child.GetComponent<DecalProjector>().size;
-                size.x += 3;
-                size.y += 3;
                 SetActiveOutlineUI(child.transform, size);
             }
         }
     }
 
-    private void SetActiveOutlineUI(Transform parent, Vector3 size)
+    public void SetActiveOutlineUI(Transform parent, Vector3 size)
     {
         var outline = outlineUIQueue.Dequeue();
+        size.x += 3;
+        size.y += 3;
         outline.size = size;
         outline.transform.parent = parent;
         outline.transform.localPosition = Vector3.forward;
+        outline.transform.localRotation = Quaternion.identity;
         outline.gameObject.SetActive(true);
         outlineUIActiveQueue.Enqueue(outline);
     }
 
-    private void SetActiveColliderPole(CropsEntity entity)
+    private void SetActivePoleCollider(CropsEntity entity)
     {
         Transform pole;
         var polePosition = entity.PolePositions;
@@ -199,6 +206,19 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void SetDeactiveOutlineUI()
+    {
+        while (outlineUIActiveQueue.Count > 0)
+        {
+            var outline = outlineUIActiveQueue.Dequeue();
+            outlineUIQueue.Enqueue(outline);
+            outline.gameObject.SetActive(false);
+            outline.transform.position = Vector3.zero;
+            outline.transform.parent = null;
+            outline.size = Vector3.forward * 2;
+        }
+    }
+
     private void SetDeactivePoleCollider()
     {
         while (poleActiveQueue.Count > 0)
@@ -208,16 +228,6 @@ public class UIManager : MonoBehaviour
             pole.gameObject.SetActive(false);
             pole.position = Vector3.zero;
             pole.parent = null;
-        }
-
-        while(outlineUIActiveQueue.Count > 0)
-        {
-            var outline = outlineUIActiveQueue.Dequeue();
-            outlineUIQueue.Enqueue(outline);
-            outline.gameObject.SetActive(false);
-            outline.transform.position = Vector3.zero;
-            outline.transform.parent = null;
-            outline.size = Vector3.forward * 2;
         }
     }
     #endregion
@@ -256,6 +266,7 @@ public class UIManager : MonoBehaviour
                 break;
             case 1:
                 ExpandWindow.SetActive(false);
+                SetDeactiveOutlineUI();
                 SetDeactivePoleCollider();
                 break;
         }
