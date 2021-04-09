@@ -71,8 +71,11 @@ public class CropsEntity : MonoBehaviour
         }
         else if(expandEntities.Count > 1)
         {
+            var parentEntity = this.expandEntities[1];
+            this.expandEntities.RemoveAt(0);
+            this.expandEntities.RemoveAt(0);
+
             var expandEntities = this.expandEntities.ToArray();
-            var parentEntity = expandEntities[0];
             foreach(var entity in expandEntities)
             {
                 entity.parentEntity = parentEntity;
