@@ -294,7 +294,7 @@ public class FenseGenerator : MonoBehaviour
                             Destroy(expendCrops.gameObject);
                         }
                         else
-                            createCrops.Initialize(CropsDatas[0]);
+                            createCrops.Initialize(0, CropsDatas[0]);
                         break;
                 }
 

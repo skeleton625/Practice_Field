@@ -12,9 +12,10 @@ public class CropsEntity : MonoBehaviour
 
     #region Private Global Variable
     private bool isWorkStarting = false;
-    private int harvestedCount = 0;
     private int monthCount = 0;
+    private int cropsDataIndex = 0;
     private int nextCropsIndex = 0;
+    private int harvestedCount = 0;
     private float cropsScale = 0f;
     private float humanTime = 0f;
     private float monthTime = 0f;
@@ -60,8 +61,24 @@ public class CropsEntity : MonoBehaviour
         genCrorpsTransform = new List<Transform>();
         expandEntities = new List<CropsEntity>();
         expandEntities.Add(this);
+    }
 
-        Debug.Log(transform.rotation.eulerAngles);
+    private void OnDestroy()
+    {
+        if(parentEntity != null)
+        {
+            parentEntity.expandEntities.Remove(this);
+        }
+        else if(expandEntities.Count > 1)
+        {
+            var expandEntities = this.expandEntities.ToArray();
+            var parentEntity = expandEntities[0];
+            foreach(var entity in expandEntities)
+            {
+                entity.parentEntity = parentEntity;
+                parentEntity.expandEntities.Add(entity);
+            }
+        }
     }
 
     private void Update()
@@ -127,13 +144,14 @@ public class CropsEntity : MonoBehaviour
     }
 
     #region Public Functions
-    public void Initialize(CropsData cropsData)
+    public void Initialize(int cropsIndex, CropsData cropsData)
     {
         humanTime = 0;
         monthTime = 0;
         monthCount = 0;
         cropsScale = cropsData.CropsMaxHeight / cropsData.GrowthCount;
         this.cropsData = cropsData;
+        this.cropsDataIndex = cropsIndex;
     }
 
     public void SetWorking(TestAI workingAI, bool isWorkStarting)
@@ -165,7 +183,6 @@ public class CropsEntity : MonoBehaviour
         expandEntities.Add(otherEntity);
         otherEntity.parentEntity = this;
     }
-
     #endregion
 
     #region Private Functions
