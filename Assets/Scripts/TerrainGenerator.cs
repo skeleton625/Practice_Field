@@ -35,7 +35,7 @@ public class TerrainGenerator : MonoBehaviour
         GenerateTerrain();
 
         ApplyTerrainLayers();
-        //ApplyTerrainDetail();
+        ApplyTerrainDetail();
     }
 
     private void GenerateTerrain()
@@ -90,21 +90,14 @@ public class TerrainGenerator : MonoBehaviour
         mainTerrain.terrainData.SetAlphamaps(0, 0, terrainLayers);
     }
 
-    public void RemoveTerrainDetail(int sx, int sz, ref bool[,] details)
+    public void RemoveTerrainDetail(Collider detailCollider)
     {
-        for(int z = 0; z < details.GetLength(0); z++)
-        {
-            for (int x = 0; x < details.GetLength(1); x++)
-            {
-                if (details[z, x])
-                    terrainDetail[z + sz, x + sx] = 0;
-            }
-        }
+        detailManager.RemoveInstancesInsideCollider(detailCollider, 1);
+    }
 
-        List<int[,]> detailMap = new List<int[,]>();
-        detailMap.Add(terrainDetail);
-        detailManager.SetDetailMapData(detailMap);
-        GPUInstancerAPI.UpdateDetailInstances(detailManager, true);
+    public void CreateTerrainDetail(Collider detailCollider)
+    {
+        detailManager.CreateDetailInstance(detailCollider, 1);
     }
 
     public void ApplyTerrainDetail()
