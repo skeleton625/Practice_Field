@@ -42,13 +42,15 @@ public class CropsEntity : MonoBehaviour
                 if (expandEntities == null)
                     return cropsPosition.Count;
 
-                var count = cropsPosition.Count;
+                var count = 0;
                 foreach (var entity in expandEntities)
                     count += entity.cropsPosition.Count;
                 return count;
             }
         }
     }
+
+    public int EachCropsCount { get => cropsPosition.Count; }
 
     public CropsEntity ParentEntity { get => parentEntity; }
     public CropsEntity[] ExpandEntities { get => expandEntities.ToArray(); }
