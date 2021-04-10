@@ -52,6 +52,8 @@ public class UIManager : MonoBehaviour
 
     public void OnClickExpandField()
     {
+        if (isDeleteField)
+            InitializeCoroutine();
         if (!isExpandField)
         {
             if (expandEntity.ParentEntity != null)
@@ -75,8 +77,12 @@ public class UIManager : MonoBehaviour
 
     public void OnClickDeleteField()
     {
-        fieldCoroutine = StartCoroutine(fieldGenerator.DestroyFieldCoroutine());
-        SetDeactiveOutlineUI();
+        if(!isDeleteField)
+        {
+            isDeleteField = true;
+            fieldCoroutine = StartCoroutine(fieldGenerator.DestroyFieldCoroutine());
+            SetDeactiveOutlineUI();
+        }
     }
 
     public void OnClickStartBuild(bool isExpand)
@@ -84,6 +90,7 @@ public class UIManager : MonoBehaviour
         fieldCoroutine = StartCoroutine(fieldGenerator.StartBuildCoroutine());
         InitializeWindows(isExpand ? 1 : 0);
         InitializeCoroutine();
+        fieldGenerator.gameObject.SetActive(false);
     }
 
     public void ChangeCropsCount(int type, int cropsCount)
@@ -183,7 +190,7 @@ public class UIManager : MonoBehaviour
                     pole.gameObject.SetActive(true);
                 }
                 else
-                    pole = Instantiate(FieldPoleTransform, position, Quaternion.identity);
+                    pole = Instantiate(FieldPoleTransform, hit.point, Quaternion.identity);
                 pole.parent = entity.transform;
                 poleActiveQueue.Enqueue(pole);
             }
@@ -204,6 +211,7 @@ public class UIManager : MonoBehaviour
             InitializeCoroutine();
             InitializeWindows(1);
         }
+        fieldGenerator.gameObject.SetActive(false);
     }
 
     public void SetDeactiveOutlineUI()
@@ -224,10 +232,10 @@ public class UIManager : MonoBehaviour
         while (poleActiveQueue.Count > 0)
         {
             var pole = poleActiveQueue.Dequeue();
-            poleTransformQueue.Enqueue(pole);
-            pole.gameObject.SetActive(false);
-            pole.position = Vector3.zero;
             pole.parent = null;
+            pole.position = Vector3.zero;
+            pole.gameObject.SetActive(false);
+            poleTransformQueue.Enqueue(pole);
         }
     }
     #endregion
@@ -279,13 +287,27 @@ public class UIManager : MonoBehaviour
             isExpandField = false;
         if (isMakingField)
             isMakingField = false;
+        if (isDeleteField)
+            isDeleteField = false;
 
         if(fieldCoroutine != null)
         {
             StopCoroutine(fieldCoroutine);
             fieldCoroutine = null;
         }
-        fieldGenerator.gameObject.SetActive(false);
+    }
+
+    public void InitializeCropsCount(CropsEntity entity = null)
+    {
+        if (entity == null)
+        {
+            CreateCropsCount.text = "0";
+        }
+        else
+        {
+            ExpandCurrentCount.text = "0";
+            ExpandEntireCount.text = entity.CropsCount.ToString();
+        }
     }
     #endregion
 }

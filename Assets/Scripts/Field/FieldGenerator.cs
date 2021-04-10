@@ -68,12 +68,9 @@ public class FieldGenerator : MonoBehaviour
         {
             Initialize();
             if (isExpand)
-            {
-                UIManager.Instance.ChangeCropsCount(1, 0);
-                UIManager.Instance.ChangeCropsCount(2, connectEntity.CropsCount);
-            }
+                UIManager.Instance.InitializeCropsCount(connectEntity);
             else
-                UIManager.Instance.ChangeCropsCount(0, 0);
+                UIManager.Instance.InitializeCropsCount();
             UIManager.Instance.InitializeCoroutine();
         }
     }
@@ -294,20 +291,28 @@ public class FieldGenerator : MonoBehaviour
     {
         var isActive = false;
         var fieldHash = 0;
-        Transform fieldEntity = null;
-        while(true)
+        Transform fieldTransform = null;
+        while (true)
         {
-            if(Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0))
             {
-                if(fieldEntity != null)
+                if (fieldTransform != null)
                 {
+                    var fieldEntity = fieldTransform.GetComponent<CropsEntity>();
                     isActive = false;
                     UIManager.Instance.SetDeactiveOutlineUI();
-                    Destroy(fieldEntity.gameObject);
+                    if (fieldEntity.ParentEntity == null && fieldEntity.ExpandEntities.Length.Equals(1))
+                        UIManager.Instance.SetDeactiveWindows();
+                    else
+                    {
+                        var count = fieldEntity.CropsCount - fieldEntity.EachCropsCount;
+                        UIManager.Instance.ChangeCropsCount(2, count);
+                    }
+                    Destroy(fieldTransform.gameObject);
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 UIManager.Instance.SetDeactiveWindows();
             }
@@ -322,15 +327,16 @@ public class FieldGenerator : MonoBehaviour
                         UIManager.Instance.SetDeactiveOutlineUI();
                     isActive = true;
                     fieldHash = preHash;
-                    fieldEntity = hit.transform;
-                    var size = fieldEntity.GetComponent<DecalProjector>().size;
+                    fieldTransform = hit.transform;
+                    var size = fieldTransform.GetComponent<DecalProjector>().size;
                     UIManager.Instance.SetActiveOutlineUI(hit.transform, size);
                 }
             }
-            else if(isActive)
+            else if (isActive)
             {
+                fieldHash = 0;
                 isActive = false;
-                fieldEntity = null;
+                fieldTransform = null;
                 UIManager.Instance.SetDeactiveOutlineUI();
             }
             yield return null;
