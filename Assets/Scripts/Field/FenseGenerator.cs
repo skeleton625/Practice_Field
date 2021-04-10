@@ -536,13 +536,12 @@ public class FenseGenerator : MonoBehaviour
                 if (isExpension)
                 {
                     expendCrops.GetComponent<MeshCollider>().sharedMesh = null;
-                    UIManager.Instance.ChangeCropsCount(1, 0);
-                    UIManager.Instance.ChangeCropsCount(2, createCrops.CropsCount);
+                    UIManager.Instance.InitializeCropsCount(createCrops);
                 }
                 else
                 {
                     createCrops.GetComponent<MeshCollider>().sharedMesh = null;
-                    UIManager.Instance.ChangeCropsCount(0, 0);
+                    UIManager.Instance.InitializeCropsCount();
                 }
                 poleCount--;
                 Destroy(poleTransform[poleCount].gameObject);
