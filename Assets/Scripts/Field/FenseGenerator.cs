@@ -315,11 +315,6 @@ public class FenseGenerator : MonoBehaviour
         }
     }
 
-    public IEnumerator DestroyField()
-    {
-        yield return null;
-    }
-
     private void GenerateCrops(bool isExpension)
     {
         float centerX = 0f, centerZ = 0f;
