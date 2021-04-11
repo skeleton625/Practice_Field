@@ -47,21 +47,6 @@ public class FieldGenerator : MonoBehaviour
         Initialize();
     }
 
-    private void OnDisable()
-    {
-        FieldBody.localScale = InitScale;
-        FieldBody.localPosition = Vector3.zero;
-        FieldVisual.transform.parent = FieldBody;
-        FieldVisual.transform.localPosition = Vector3.up * 2;
-        FieldVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
-        FieldVisual.size = new Vector3(PartScale, PartScale, 5);
-        transform.position = Vector3.zero;
-
-        FieldGrid.SetFloat("_Rotate", 90);
-        FieldGrid.SetColor("_OutlineColor", PossibleColor);
-        FieldGrid.SetVector("_Offset", new Vector2(0, .5f));
-    }
-
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.E))
@@ -460,6 +445,18 @@ public class FieldGenerator : MonoBehaviour
         fieldSpace = Quaternion.identity;
         reverseFieldSpace = Quaternion.identity;
         transform.localRotation = Quaternion.identity;
+
+        FieldBody.localScale = InitScale;
+        FieldBody.localPosition = Vector3.zero;
+        FieldVisual.transform.parent = FieldBody;
+        FieldVisual.transform.localPosition = Vector3.up * 2;
+        FieldVisual.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        FieldVisual.size = new Vector3(PartScale, PartScale, 5);
+        transform.position = Vector3.zero;
+
+        FieldGrid.SetFloat("_Rotate", 90);
+        FieldGrid.SetColor("_OutlineColor", PossibleColor);
+        FieldGrid.SetVector("_Offset", new Vector2(0, .5f));
     }
     #endregion
 
