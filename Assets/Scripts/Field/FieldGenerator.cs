@@ -47,6 +47,11 @@ public class FieldGenerator : MonoBehaviour
         Initialize();
     }
 
+    private void OnDisable()
+    {
+        FieldVisual.transform.parent = FieldBody;
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.E))
@@ -389,16 +394,14 @@ public class FieldGenerator : MonoBehaviour
 
         int sx = 2, ex = xScale * 2;
         int sz = 2, ez = zScale * 2;
-        if((xScale % 2).Equals(0)) { sx = 3; ex = xScale * 2 - 1; }
-        if ((zScale % 2).Equals(0)) { sz = 3; ez = zScale * 2 - 1; }
 
         var polePosition = new List<Vector3>();
-        for (int k = sx; k <= ex; k += 4)
+        for (int k = sx; k <= ex; k += 2)
         {
             polePosition.Add(vertexPosition[0] + reverseFieldSpace * new Vector3(k - 1, 0, -1));
             polePosition.Add(vertexPosition[1] + reverseFieldSpace * new Vector3(k - 1, 0, 1));
         }
-        for(int k = sz; k <= ez; k += 4)
+        for(int k = sz; k <= ez; k += 2)
         {
             polePosition.Add(vertexPosition[0] + reverseFieldSpace * new Vector3(-1, 0, k - 1));
             polePosition.Add(vertexPosition[3] + reverseFieldSpace * new Vector3(1, 0, k - 1));
@@ -484,7 +487,7 @@ public class FieldGenerator : MonoBehaviour
             fieldSpace.w = reverseFieldSpace.w;
 
             FieldGrid.SetFloat("_Rotate", 45);
-            FieldGrid.SetVector("_Offset", new Vector2(.105f, -.25f));
+            FieldGrid.SetVector("_Offset", new Vector2(.105f, .75f));
         }
         else
         {
