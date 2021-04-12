@@ -274,8 +274,6 @@ public class UIManager : MonoBehaviour
                 break;
             case 1:
                 ExpandWindow.SetActive(false);
-                SetDeactiveOutlineUI();
-                SetDeactivePoleCollider();
                 break;
         }
         buildingHash = 0;
@@ -284,7 +282,11 @@ public class UIManager : MonoBehaviour
     public void InitializeCoroutine()
     {
         if (isExpandField)
+        {
             isExpandField = false;
+            SetDeactiveOutlineUI();
+            SetDeactivePoleCollider();
+        }
         if (isMakingField)
             isMakingField = false;
         if (isDeleteField)
